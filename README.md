@@ -1,7 +1,7 @@
 # Labdeploy
 Deployes ACLXray lab into Azure
 
-The deployment consists of a singl
+The deployment consists of a single
 
 VNET
 
