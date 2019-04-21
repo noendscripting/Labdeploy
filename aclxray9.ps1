@@ -128,6 +128,8 @@ if(!($redeploy))
   #Create Resource Group
   New-AzureRmResourceGroup -Name $RG -Location $region
   #Create storage account for disks in a lab
+  $saprefix=get-random -Minimum 1000 -Maximum 10000000 
+  $saname = 'aclxray'+$saprefix
   New-AzureRMStorageAccount -ResourceGroupName $RG -Name $saname -Location $region -type Standard_LRS | Out-Null
   $destcontext = get-StorageContext -storageName $saname -strageRG $RG
   $destcontainer = New-AzureStorageContainer -Name 'images' -Context $destcontext
