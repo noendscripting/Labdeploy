@@ -1,51 +1,98 @@
+[CmdltBinding()]
+param()
 
 Write-Verbose "Checking installed updates" 
 
 #Creating COM Windows Update object. Com Object only exists in Windows Server 2012 R2 or older
-$UpdateSession = New-Object -ComObject "Microsoft.Update.Session"
-$UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
+$updateSession = New-Object -ComObject "Microsoft.Update.Session"
+$updateSearcher = $updateSession.CreateUpdateSearcher()
+Write-Verbose "Starting update search"
+#Search for missing important updates 
+$searchResults = $updateSearcher.Search("isInstalled=0 and AutoSelectOnWebSites=1")
 
-#Query History of updates for the last 40 days 
-If (($UpdateSearcher.QueryHistory(0,1)| Select-Object Date).Date -le (Get-Date).Add(-40))
+#Check fi any updates need to be installed
+If ($searchResults.Updates.Count -eq 0)
 {
-    #If no updates were installed in the last 40 days create a loist of availble updates
-    Write-Verbose "Creating Download Selection" 
-    $SearchResults = $UpdateSearcher.Search("IsInstalled=0 and IsHidden=0")
-    #Filter updates to category system and security
-    $availabaleUpdates = $SearchResults.RootCategories.Item(4).Updates
+    Write-Host 'All Up to Date no Updates Needed'
+    exit
 
-    #Create list for for download
-    $DownloadCollection = New-Object -com "Microsoft.Update.UpdateColl"
-    ForEach($update in $availabaleUpdates )
-    {
-        $DownloadCollection.Add($update)
-    }
-    #Download Updates
-    Write-Verbose "Downloading Updates" 
-    $Downloader = $UpdateSession.CreateUpdateDownloader() 
-    $Downloader.Updates = $DownloadCollection 
-    $Downloader.Download() 
-    Write-verbose "Download complete."
-    Write-Verbose "Creating Installation Object"
-    #Start Installation process
-    $InstallCollection = New-Object -com "Microsoft.Update.UpdateColl" 
-    ForEach($update in $availabaleUpdates )
-    {
-        if($update.IsDownloaded)
-        {
-            $InstallCollection.Add($update) | Out-Null 
-        }
-
-    }
-    $Installer = $UpdateSession.CreateUpdateInstaller() 
-    $Installer.Updates = $InstallCollection 
-    #Get reuslts and process reboot
-    $Results = $Installer.Install()
-
-    if ($Results.RebootRequired) { 
-            Write-Verbose "Rebooting..." 
-            Restart-Computer
-        } 
-        
 
 }
+Write-Verbose "Creating Download Selection"
+#create Updates collection class for download
+$updatesToDownload = new-object -ComObject "Microsoft.Update.UpdateColl"
+
+forEach ($update in $searchResults.Updates)
+{
+
+    #verify if updates requier input or EULA acceptance 
+    if ($update.InstallationBehavior.CanRequestUserInput -eq $true  -or $update.EulaAccepted -eq $false)
+    {
+
+        Write-Host "Skipping update. Can not be installed unattended"
+        Continue
+    }
+    #add update to the list updates to be dowloaded
+    $updatesToDownload.Add($update) | Out-Null
+
+
+
+
+
+
+
+}
+
+#verify updates ready for downloading
+If ($updatesToDownload.Count -eq 0)
+{
+
+
+    Write-Host "No updates to download. Exiting script"
+    exit
+
+}
+
+#Create download object and start downloading updates
+Write-Verbose "Downloading Updates" 
+$downloader = $updateSession.CreateUpdateDownloader()
+$downloader.Updates = $updatesToDownload
+$downloader.Download()
+
+Write-verbose "Download complete."
+Write-Verbose "Creating Installation Object"
+
+# create updates to install collection 
+$updatesToInstall = New-Object -Comobject "Microsoft.Update.UpdateColl"
+
+
+#add downloaded updates to install collection
+forEach ($update in $searchResults.Updates)
+{
+
+    if($update.IsDownloaded -eq $true)
+    {
+
+        $updatesToInstall.Add($update) | Out-Null
+
+
+    }
+
+
+
+}
+
+#intiate update installer class and start installing updates
+$updateInstaller = $updateSession.CreateUpdateInstaller()
+$updateInstaller.Updates = $updatesToInstall
+
+$installResult = $updateInstaller.Install()
+
+$installResult.ResultCode
+
+if ($Results.RebootRequired) { 
+    Write-Verbose "Rebooting..." 
+    Restart-Computer -Force
+} 
+
+
