@@ -1,5 +1,5 @@
 # Labdeploy
-Deployes ACLXray lab into Azure
+_Deployes ACLXray lab into Azure_
 
 The deployment consists of a single
 
