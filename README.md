@@ -3,7 +3,7 @@ _Deployes ACLXray lab into Azure_
 
 The deployment consists of a single
 
-VNET
+> VNET
 
 Subnet
 
