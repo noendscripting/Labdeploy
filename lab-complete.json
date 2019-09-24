@@ -327,7 +327,6 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                //"https://raw.githubusercontent.com/noendscripting/azuredeploy/master/enable-updates.ps1"
                 "https://101filepoc.blob.core.windows.net/lab/enable-updates.ps1"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'enable-updates.ps1')]"
