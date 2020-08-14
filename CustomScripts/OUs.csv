@@ -1,10 +1,5 @@
-Name
-North America
-South America
-Africa
-Europe
-Asia
-Oceania
-Rest of the World
-Company Users
-Company Computers
+OU=Security Groups,OU=Groups
+OU=Accounts,OU=Tier 0,OU=Admin
+OU=Accounts,OU=Tier 1,OU=Admin
+OU=Accounts,OU=Tier 2,OU=Admin
+OU=Enabled Users,OU=User Accounts
