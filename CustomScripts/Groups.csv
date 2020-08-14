@@ -1,0 +1,6 @@
+Name,Description,DisplayName,SamAccountName,GroupScope
+Finance,Finance,Finance,Finance,DomainLocal
+PublicRelationships,PublicRelationships,PublicRelationships,PublicRelationships,DomainLocal
+Projects,Projects,Projects,Projects,DomainLocal
+Marketing,Marketing,Marketing,Marketing,Global
+Operations,Operations,Operations,Operations,Global

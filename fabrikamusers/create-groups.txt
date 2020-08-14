@@ -1,0 +1,12 @@
+#create Groups in Department OU
+$_new_groups = "Logistics","Information-Technology","IT-Support","Strategic-Information-Systems","Data-Entry","Research-and-Development","Strategic-Sourcing","Purchasing","Strategic-Sourcing","Operations","Public-Relations","Corporate-Communications","Advertising","Market-Research","Strategic-Marketing","Customer-service","Telesales","Account-Management","Marketing","Sales","Payroll","Recruitment","Training","Human Resource","Accounting","Financial"
+
+#create random 
+
+#name: security_group_access_100
+#name: security_group_access_210 Nest
+#name: security_group_access_305
+#name: security_group_access_400
+#name: security_group_share_210
+#name: security_group_files_100
+#name: security_group_ad_rights_100

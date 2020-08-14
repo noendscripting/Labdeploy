@@ -66,18 +66,10 @@ $shutdownTimeZone='Pacific Standard Time',
 $shutDownTime = '01:00',
 [bool]$redeploy = $false,
 $vnetname = 'ACLXRAYlabvnet',
-$subnetname = 'subnet1'
+$subnetname = 'subnet1',
+$containerName = "images"
 )
 
-Function get-StorageContext
-{
-  param(
-    $storageName,
-    $strageRG
-  )
-  $storagekey = (get-azureRMstorageaccountkey -resourcegroupname $strageRG -StorageAccountName $storageName).value[1]
-  Return New-AzureStorageContext -StorageAccountName $storageName -StorageAccountKey $storagekey
-}
 
 if (!(get-module AzureRM))
 {
@@ -122,23 +114,76 @@ switch ($result)
 #
 
 #-----------------------------------------------
-#create resourcegroup
+
 if(!($redeploy))
 {
-  #Create Resource Group
+
+  #Create Resource Group, Storage Account and Container
   New-AzureRmResourceGroup -Name $RG -Location $region
-  #Create storage account for disks in a lab
   $saprefix=get-random -Minimum 1000 -Maximum 10000000 
   $saname = 'aclxray'+$saprefix
-  New-AzureRMStorageAccount -ResourceGroupName $RG -Name $saname -Location $region -type Standard_LRS | Out-Null
-  $destcontext = get-StorageContext -storageName $saname -strageRG $RG
-  $destcontainer = New-AzureStorageContainer -Name 'images' -Context $destcontext
-  New-AzureStorageContainer -Name 'vhds' -Context $destcontext | Out-Null
+  $storageAccount = New-AzureRMStorageAccount -ResourceGroupName $RG -Name $saname -Location $region -type Standard_LRS
+  $destcontext = $storageAccount.context
+  New-AzureStorageContainer -Name $containerName -Context $destcontext
+  #New-AzureStorageContainer -Name 'vhds' -Context $destcontext | Out-Null
 
-  #setup vars to copy files from source to newly created storage account
+  #generate SAS tokens to copy files from source to newly created storage account
   $sourcesaname = 'aclxray586844'
   $sourcekey= 'UvzfWkCDNS9dip/NdUJwEZM9wy+Jq7spMW/R91327NV3LpMd2J1p1z1N0iFcwgC0HyxVPf7qCQN4QH0/0AChpA=='
   $sourcecontext = New-AzureStorageContext -StorageAccountName $sourcesaname -StorageAccountKey $sourcekey
+  $sourceSAStoken = New-AzureStorageContainerSASToken -Context $sourceContext -ExpiryTime (get-date).AddHours(4).ToUniversalTime() -Name $containerName -Permission rl
+  $destSASToken =  New-AzureStorageContainerSASToken -Context $destcontext -ExpiryTime (get-date).AddHours(4).ToUniversalTime() -Name $containerName -Permission racwdl
+
+
+  Write-Host "Destination storage account name $($saname) "
+  Write-Verbose "Source SAS $($sourceSAStoken)"
+  Write-Verbose "Destination SAA $($destSAStoken)"
+
+
+  #Set azcopy properties
+  $azcopyArgument = "copy ""https://$($sourcesaname).blob.core.windows.net/images$($sourceSASToken)""  ""https://$($saname).blob.core.windows.net/images$($destSAStoken)""  --recursive=true"
+
+  Write-Verbose $azcopyArgument
+
+  #download and set up the latest azcopy
+  Invoke-WebRequest -Uri https://aka.ms/downloadazcopy-v10-windows -OutFile azcopy.zip
+  Expand-Archive azcopy.zip
+  $azcopyExec = (Get-ChildItem  "azcopy.exe" -Recurse).FullName
+
+  #setup variable for azcopy console output
+  $azcopyOutputArray = @()
+
+  #execute azcopy
+  Invoke-Expression "$($azcopyExec) $($azcopyArgument)" | ForEach-Object {
+  
+  #read azcopy copy output line by line
+    Write-Host $_ -ForegroundColor Green
+    $azcopyOutputArray += $_
+
+    If ($_.ToString() -match "Log file is located at")
+    {
+
+        $Script:logFile = [regex]::match($testString,"Log file is located at: ((?:[^/]*/)*)(.*)").Groups[2].value
+
+    }
+  }
+
+  #check if copy completed successfully and display azcopy log if erorr occured
+  if (!($azcopyOutputArray | Select-String "Final Job Status: Completed"))
+  {
+
+    Write-Error "Transfer Failed Please check logs"
+    exit
+
+    Write-Verbose $logFile
+
+  }
+
+#display az copy log 
+Write-Host $logFile 
+
+
+  <#
   $sourcecontainer = Get-AzureStoragecontainer -Context $sourcecontext | Where {$_.Name -eq 'images'}
   $blobs = get-azurestorageblob -container $sourcecontainer.Name -Context $sourcecontext | Where-Object {$_.snapshottime -eq $null} 
 
@@ -158,7 +203,7 @@ if(!($redeploy))
     }
   }
   Write-Progress -Id 1 -Completed -Activity "Copying Blobs"
-  write-host "Total copy time $((new-TimeSpan($_copytime) $(Get-Date)).TotalMinutes) minutes" -foregroundcolor yellow
+  write-host "Total copy time $((new-TimeSpan($_copytime) $(Get-Date)).TotalMinutes) minutes" -foregroundcolor yellow#>
 }
 else
 {
@@ -169,7 +214,7 @@ else
 
 
 
-
+exit
 
 
 

@@ -1,0 +1,10 @@
+$groups = get-adgroup -LDAPFilter "(!(IsCriticalSystemObject=TRUE))"
+get-adgroups -LDAPFilter "(!(IsCriticalSystemObject=TRUE))" | foreach{
+    $_.DistinguishedName
+    $_group_count = Get-Random -Minimum 1 -Maximum 10
+    $_group_count
+    for ($i=1; $i -le $_group_count; $i++) {
+        
+        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
+    }
+}

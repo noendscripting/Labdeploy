@@ -1,0 +1,1019 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "VADMIN"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VNET02"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Test@2016"
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "defaultValue": "Dynamic"
+    },
+    "shutDownTime": {
+      "type": "string",
+      "defaultValue": "23:00"
+    },
+    "shutdownTimeZone": {
+      "type": "string",
+      "allowedValues": [
+        "Dateline Standard Time",
+        "UTC-11",
+        "Hawaiian Standard Time",
+        "Alaskan Standard Time",
+        "Pacific Standard Time (Mexico)",
+        "Pacific Standard Time",
+        "US Mountain Standard Time",
+        "Mountain Standard Time (Mexico)",
+        "Mountain Standard Time",
+        "Central America Standard Time",
+        "Central Standard Time",
+        "Central Standard Time (Mexico)",
+        "Canada Central Standard Time",
+        "SA Pacific Standard Time",
+        "Eastern Standard Time (Mexico)",
+        "Eastern Standard Time",
+        "US Eastern Standard Time",
+        "Venezuela Standard Time",
+        "Paraguay Standard Time",
+        "Atlantic Standard Time",
+        "Central Brazilian Standard Time",
+        "SA Western Standard Time",
+        "Newfoundland Standard Time",
+        "E. South America Standard Time",
+        "SA Eastern Standard Time",
+        "Argentina Standard Time",
+        "Greenland Standard Time",
+        "Montevideo Standard Time",
+        "Bahia Standard Time",
+        "Pacific SA Standard Time",
+        "UTC-02",
+        "Azores Standard Time",
+        "Cape Verde Standard Time",
+        "Morocco Standard Time",
+        "UTC",
+        "GMT Standard Time",
+        "Greenwich Standard Time",
+        "W. Europe Standard Time",
+        "Central Europe Standard Time",
+        "Romance Standard Time",
+        "Central European Standard Time",
+        "W. Central Africa Standard Time",
+        "Namibia Standard Time",
+        "Jordan Standard Time",
+        "GTB Standard Time",
+        "Middle East Standard Time",
+        "Egypt Standard Time",
+        "Syria Standard Time",
+        "E. Europe Standard Time",
+        "South Africa Standard Time",
+        "FLE Standard Time",
+        "Turkey Standard Time",
+        "Israel Standard Time",
+        "Kaliningrad Standard Time",
+        "Libya Standard Time",
+        "Arabic Standard Time",
+        "Arab Standard Time",
+        "Belarus Standard Time",
+        "Russian Standard Time",
+        "E. Africa Standard Time",
+        "Iran Standard Time",
+        "Arabian Standard Time",
+        "Azerbaijan Standard Time",
+        "Russia Time Zone 3",
+        "Mauritius Standard Time",
+        "Georgian Standard Time",
+        "Caucasus Standard Time",
+        "Afghanistan Standard Time",
+        "West Asia Standard Time",
+        "Ekaterinburg Standard Time",
+        "Pakistan Standard Time",
+        "India Standard Time",
+        "Sri Lanka Standard Time",
+        "Nepal Standard Time",
+        "Central Asia Standard Time",
+        "Bangladesh Standard Time",
+        "N. Central Asia Standard Time",
+        "Myanmar Standard Time",
+        "SE Asia Standard Time",
+        "North Asia Standard Time",
+        "China Standard Time",
+        "North Asia East Standard Time",
+        "Singapore Standard Time",
+        "W. Australia Standard Time",
+        "Taipei Standard Time",
+        "Ulaanbaatar Standard Time",
+        "Tokyo Standard Time",
+        "Korea Standard Time",
+        "Yakutsk Standard Time",
+        "Cen. Australia Standard Time",
+        "AUS Central Standard Time",
+        "E. Australia Standard Time",
+        "AUS Eastern Standard Time",
+        "West Pacific Standard Time",
+        "Tasmania Standard Time",
+        "Magadan Standard Time",
+        "Vladivostok Standard Time",
+        "Russia Time Zone 10",
+        "Central Pacific Standard Time",
+        "Russia Time Zone 11",
+        "New Zealand Standard Time",
+        "UTC+12",
+        "Fiji Standard Time",
+        "Tonga Standard Time",
+        "Samoa Standard Time",
+        "Line Islands Standard Time"
+      ]
+    },
+
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "ContosoDCConfigArchiveFileName": {
+      "type": "string"
+    },
+    "FabrikamDCConfigArchiveFileName": {
+      "type": "string"
+    },
+    "EUDSCConfigAcrhiveFileName": {
+      "type": "string"
+    }
+  },
+
+  "variables": {
+    "VMBuildParams": {
+      "params": [
+        {
+          "virtualMachineName": "contosodc1",
+          "CustomIPAddress": "[variables('contosoDNSServerIP')]",
+          "subnetRef": "[variables('subnetRef')[0]]",
+          "vmSize": "[parameters('virtualMachineSize')]",
+          "sku": "2012-R2-Datacenter",
+          "domainName": "contosoad.com",
+          "NetBiosDomainname": "contosoad",
+          "ForwarderIPaddress": "[variables('fabrikamDNSServerIP')]",
+          "ForwarderDomain": "fabrikamad.com",
+          "user": "[parameters('AdminUserName')]",
+          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('ContosoDCConfigArchiveFileName'))]",
+          "script": "[variables('ContosoDscConfigurationScript')]",
+          "function": "[variables('ContosoDscConfigurationFunction')]"
+        },
+        {
+          "virtualMachineName": "fabrikamdc1",
+          "CustomIPAddress": "[variables('fabrikamDNSServerIP')]",
+          "subnetRef": "[variables('subnetRef')[1]]",
+          "vmSize": "[parameters('virtualMachineSize')]",
+          "sku": "2012-R2-Datacenter",
+          "domainName": "fabrikamad.com",
+          "NetBiosDomainname": "fabrikamad",
+          "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
+          "ForwarderDomain": "contosoad.com",
+          "user": "[parameters('AdminUserName')]",
+          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('FabrikamDCConfigArchiveFileName'))]",
+          "script": "[variables('FabrikamDscConfigurationScript')]",
+          "function": "[variables('FabrikamDscConfigurationFunction')]"
+        },
+        {
+          "virtualMachineName": "eucontosodc1",
+          "CustomIPAddress": "[variables('eucontosodcDNSServerIP')]",
+          "subnetRef": "[variables('subnetRef')[0]]",
+          "vmSize": "[parameters('virtualMachineSize')]",
+          "sku": "2012-R2-Datacenter",
+          "domainName": "contosoad.com",
+          "NetBiosDomainname": "eu",
+          "ForwarderIPaddress": "",
+          "ForwarderDomain": "",
+          "user": "[concat('contosoad.com\\',parameters('AdminUserName'))]",
+          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('EUDSCConfigAcrhiveFileName'))]",
+          "script": "[variables('EUDscConfigurationScript')]",
+          "function": "[variables('EUDscConfigurationFunction')]"
+        }
+
+      ]
+    },
+    "NSGnames": [
+      "contosoNSG",
+      "fabrikamNSG"
+    ],
+    "vnetSubnetName": [
+      "contoso-Subnet",
+      "fabrikam-Subnet"
+    ],
+    "VirtualNetworkIPPrefix": "10.1.0.0/16",
+    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnetRef": [
+      "[concat(variables('vnetId'), '/subnets/', variables('vnetSubnetName')[0])]",
+      "[concat(variables('vnetId'), '/subnets/', variables('vnetSubnetName')[1])]"
+    ],
+    "publicIPName": [
+      "[concat(variables('VMBuildParams').params[0].virtualMachineName,'PUBLICIP')]",
+      "[concat(variables('VMBuildParams').params[1].virtualMachineName,'PUBLICIP')]",
+      "[concat(variables('VMBuildParams').params[2].virtualMachineName,'PUBLICIP')]"
+
+    ],
+    "privateNICName": [
+      "[concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC')]",
+      "[concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC')]",
+      "[concat(variables('VMBuildParams').params[2].virtualMachineName,'NIC')]"
+
+    ],
+    "VnetIpArray": "[split(variables('VirtualNetworkIPPrefix'),'.')]",
+    "contosoSubnetIpPrefix": "[concat(variables('VnetIpArray')[0],'.',variables('VnetIpArray')[1],'.0.0/24')]",
+    "fabrikamSubnetIpPrefix": "[concat(variables('VnetIpArray')[0],'.',variables('VnetIpArray')[1],'.1.0/24')]",
+    "contosoSubnetIPArray": "[split(variables('contosoSubnetIpPrefix'),'.')]",
+    "fabrikamSubnetIPArray": "[split(variables('fabrikamSubnetIpPrefix'),'.')]",
+    "contosoDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
+    "eucontosodcDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
+    "fabrikamDNSServerIP": "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]",
+    "ContosoDscConfigurationFunction": "DcConfig",
+    "ContosoDscConfigurationScript": "ForestDCConfig.ps1",
+    "EUDscConfigurationFunction": "DcConfig",
+    "EUDscConfigurationScript": "EUDCConfig.ps1",
+    "FabrikamDscConfigurationFunction": "DCConfig",
+    "FabrikamDscConfigurationScript": "ForestDCConfig.ps1",
+
+    "CustomScriptScriptFolder": "CustomScripts",
+    "CustomScriptScriptFileName": "CustomScript.ps1",
+    "CustomScriptScriptContent": [
+      "contosoad-Users.csv",
+      "fabrikam-users.csv",
+      "Groups.csv",
+      "Members.csv",
+      "OUs.csv"
+    ]
+
+  },
+  "resources": [
+
+    // NSG Contoso
+    {
+      "comments": "# NSG",
+      "name": "[variables('NSGNames')[0]]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "contosoNSG"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-winrm-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5986",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-in-vnet-only",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1600,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-out-vnet-only",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1700,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "allow-out-443-internet",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 1800,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    // NSG Fabrikam
+    {
+      "comments": "# NSG",
+      "name": "[variables('NSGNames')[1]]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "fanrikamNSG"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-winrm-in",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5986",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-in-vnet-only",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1600,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-out-vnet-only",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 1700,
+              "direction": "Outbound"
+            }
+          }
+
+        ]
+      }
+    },
+
+    //Public IP LOOP
+    {
+      "name": "[variables('publicIPName')[copyIndex()]]",
+      "Type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIP-Loop"
+      },
+      "Properties": {
+        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+
+      },
+      "copy": {
+        "name": "PublicIPCopy",
+        "count": "[length(variables('publicIPName'))]"
+      }
+    },
+    //VNET Settings
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[1])]"
+      ],
+      "tags": {
+        "displayName": "VNET"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VirtualNetworkIPPrefix')]"
+          ]
+        },
+        "subnets": [
+
+          {
+            "name": "[variables('vnetSubnetName')[0]]",
+            "properties": {
+              "addressPrefix": "[variables('contosoSubnetIpPrefix')]"
+            },
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]"
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetName')[1]]",
+            "properties": {
+              "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]"
+            },
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]"
+            }
+
+          }
+        ]
+      }
+    },
+    //CONTOSO NIC LOOP
+    {
+      "name": "[variables('privateNICName')[copyIndex()]]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "PublicIPCopy",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ],
+      "tags": {
+        "displayName": "CONTOSO DC NIC"
+      },
+      "properties": {
+        "primary": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('VMBuildParams').params[copyIndex()].subnetRef]"
+              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[copyIndex()])]"
+              }
+            }
+          }
+        ]
+
+      },
+      "copy": {
+        "name": "ForestBuild",
+            "count": 2
+      }
+    },
+    // EU DC NIC
+    {
+      "comments": "# EU Contoso DC NIC",
+      "name": "[variables('privateNICName')[2]]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "PublicIPCopy",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ],
+      "tags": {
+        "displayName": "EU DC NIC"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('VMBuildParams').params[2].CustomIPAddress]",
+              "subnet": {
+                "id": "[variables('VMBuildParams').params[2].subnetRef]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[2])]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [ "[variables('VMBuildParams').params[0].CustomIPAddress]" ]
+        }
+      }
+    },
+    //FOREST DCs
+    {
+      "name": "[variables('VMBuildParams').params[copyIndex()].virtualMachineName]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[copyIndex()])]"
+      ],
+      "tags": {
+        "displayName": "Forest-DC-Build-Loop"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('VMBuildParams').params[copyIndex()].virtualMachineName]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('VMBuildParams').params[copyIndex()].vmSize]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[variables('VMBuildParams').params[copyIndex()].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[copyIndex()])]"
+            }
+          ]
+
+        }
+
+      },
+      "copy": {
+        "name": "ForestBuild",
+        "count": 2
+      },
+      "resources": [
+        /* {
+          "name": "ImportDC1",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('VMNames')[0])]",
+            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[0],'/extensions/DCConfig1')]"
+          ],
+          "tags": {
+            "displayName": "DC1ImportScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[0], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('projectName'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+            }
+          } 
+        }*/
+      ]
+    },
+    // EU DC
+    {
+      "name": "[variables('VMBuildParams').params[2].virtualMachineName]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[2])]"
+      ],
+      "tags": {
+        "displayName": "EU-DC"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('VMBuildParams').params[2].virtualMachineName]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('VMBuildParams').params[2].vmSize]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[variables('VMBuildParams').params[2].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[2])]"
+            }
+          ]
+
+        }
+
+      }
+    },
+
+    /*//FIM1
+    {
+      "name": "[variables('VMNames')[2]]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('contosofsNICName'))]"
+      ],
+      "tags": {
+        "displayName": "FIM1"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('VMNames')[2]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_DS3_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "SQL2012SP3-WS2012R2",
+            "sku": "Standard",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('contosofsNICName'))]"
+            }
+          ]
+
+        }
+
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[2])]",
+            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[1],'/extensions/DCConfig2')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "Name": "[parameters('domain2Name')]",
+              "User": "[concat(parameters('domain2Name'),'\\', parameters('AdminUserName'))]",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+      ]
+    },
+    //ADMT1
+    {
+      "name": "[variables('VMNames')[3]]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('fabrikamfsNICName'))]"
+      ],
+      "tags": {
+        "displayName": "ADMT"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('VMNames')[3]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('sku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('fabrikamfsNICName'))]"
+            }
+          ]
+
+        }
+
+      },
+      "resources": [
+        // Join domain - Json AD Domain Extension
+        {
+          "comments": "Join domain - JsonADDomainExtension",
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "joinDomain",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[3])]",
+            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[0],'/extensions/DCConfig1')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+
+            "type": "JsonADDomainExtension",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "Name": "[parameters('domain2Name')]",
+              "User": "[concat(parameters('domain1Name'),'\\', parameters('AdminUserName'))]",
+              "Restart": "true",
+              "Options": 3
+            },
+            "protectedsettings": {
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+      ]
+    },*/
+    //Forest DSC Extension
+    {
+      "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-03-01",
+
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "DisplayName": "ForestDCSextensions"
+      },
+      "dependsOn": [
+
+        "ForestBuild"  ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.26",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "wmfVersion": "latest",
+
+          "configuration": {
+            "script": "[variables('VMBuildParams').params[copyIndex()].script]",
+            "url": "[variables('VMBuildParams').params[copyIndex()].url]",
+            "function": "[variables('VMBuildParams').params[copyIndex()].function]"
+
+          },
+          "configurationArguments": {
+            "nodeName": "localhost",
+            "domainName": "[variables('VMBuildParams').params[copyIndex()].domainName]",
+            "NetBiosDomainname": "[variables('VMBuildParams').params[copyIndex()].NetBiosDomainname]",
+            "ForwarderIPaddress": "[variables('VMBuildParams').params[copyIndex()].ForwarderIPaddress]",
+            "ForwarderDomain": "[variables('VMBuildParams').params[copyIndex()].ForwarderDomain]",
+            "TimeZone": "[parameters('shutdownTimeZone')]"
+
+          }
+        },
+        "protectedSettings": {
+          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+          "configurationArguments": {
+            "DomainAdminCredentials": {
+              "UserName": "[variables('VMBuildParams').params[copyIndex()].user]",
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+      },
+      "copy": {
+        "name": "ContosoForestConfig",
+        "count": 2
+      }
+
+    },
+    //Child DSC Extension
+    {
+      "name": "[concat(variables('VMBuildParams').params[2].virtualMachineName,'/',variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "DisplayName": "ChildDCSextension"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"        
+         ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.26",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "wmfVersion": "latest",
+
+          "configuration": {
+            "script": "[variables('VMBuildParams').params[2].script]",
+            "url": "[variables('VMBuildParams').params[2].url]",
+            "function": "[variables('VMBuildParams').params[2].function]"
+
+          },
+          "configurationArguments": {
+            "nodeName": "localhost",
+            "domainName": "[variables('VMBuildParams').params[2].domainName]",
+            "NetBiosDomainname": "[variables('VMBuildParams').params[2].NetBiosDomainname]",
+            "ForwarderIPaddress": "[variables('VMBuildParams').params[2].ForwarderIPaddress]",
+            "ForwarderDomain": "[variables('VMBuildParams').params[2].ForwarderDomain]",
+            "TimeZone": "[parameters('shutdownTimeZone')]"
+
+          }
+        },
+        "protectedSettings": {
+          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+          "configurationArguments": {
+            "DomainAdminCredentials": {
+              "UserName": "[variables('VMBuildParams').params[2].user]",
+              "Password": "[parameters('AdminPassword')]"
+            }
+          }
+        }
+      }
+    },
+    //Shutdown Schedule
+    {
+      "apiVersion": "2018-09-15",
+      "Type": "Microsoft.DevTestLab/schedules",
+      "name": "[concat('shutdown-computevm-',variables('VMBuildParams').params[copyIndex()].virtualMachineName)]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/set-VNET-DNS"
+      ],
+      "tags": {
+        "displayName": "VMShutdown-Schedule"
+      },
+      "properties": {
+        "status": "Enabled",
+        "timeZoneId": "[parameters('shutdownTimeZone')]",
+        "taskType": "ComputeVmShutdownTask",
+        "notificationSettings": {
+          "status": "Disabled",
+          "timeInMinutes": 15,
+          "webhookUrl": null
+        },
+        "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', variables('VMBuildParams').params[copyIndex()].virtualMachineName)]",
+        "dailyRecurrence": {
+          "time": "[parameters('shutdownTime')]"
+        }
+      },
+      "copy": {
+        "name": "scheduleCopy",
+        "count": "[length(variables('VMBuildParams'))]"
+      }
+
+    },
+    //Setting DNS on the VNET
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "name": "set-VNET-DNS",
+      "dependsOn": [
+        "ContosoForestConfig"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "name": "[parameters('virtualNetworkName')]",
+              "type": "Microsoft.Network/virtualNetworks",
+              "location": "[resourceGroup().location]",
+              "apiVersion": "2018-08-01",
+              "tags": { "DisplayName": "VNET" },
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[variables('VirtualNetworkIPPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[variables('vnetSubnetName')[0]]",
+                    "properties": {
+                      "addressPrefix": "[variables('contosoSubnetIpPrefix')]"
+                    }
+                  },
+                  {
+                    "name": "[variables('vnetSubnetName')[1]]",
+                    "properties": {
+                      "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]"
+                    }
+
+                  }
+                ],
+                "dhcpOptions": {
+                  "dnsServers": [
+                    "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
+                    "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
+                    "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+
+  }
+}
