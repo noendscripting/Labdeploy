@@ -68,9 +68,7 @@ Param(
   $shutDownTime = '01:00',
   [bool]$redeploy = $false,
   $vnetname = 'ACLXRAYlabvnet',
-  $containerName = "storageartifacts",
-  
-
+  $containerName = "storageartifacts"
 
 )
 
@@ -149,15 +147,15 @@ $artifactLocation = "$($destcontext.BlobEndPoint)$($containerName)"
 Write-Verbose "Destination SAA $($destSAStoken)"
 
 
-$ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
+#$ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
 $ForestDSConfigPath = "$($PSScriptRoot)\DSC\ForestDCConfig.ps1"
 $EUDSConfigPath = "$($PSScriptRoot)\DSC\EUDCConfig.ps1"
 
 $EUDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $EUDSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $EUDSConfigFile = $EUDSConfigURI.Split("/")[-1]
 
-$ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-$ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
+#$ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
+#$ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
 
 $ForestDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ForestDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $ForestDSConfigFile = $ForestDSConfigURI.Split("/")[-1]
