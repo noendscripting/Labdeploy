@@ -1,4 +1,0 @@
-foreach($user in (import-csv c:\data\everything.csv)){
-    $name = $user.first + " " + $user.last
-    New-ADUser -Name $name -City $user.city -Company "Azure Lab" -Country US -EmailAddress $user.email -GivenName $user.first -MobilePhone $user.phone -OfficePhone $user.phone -PostalCode $user.zip -SamAccountName $user.samaccountname -State $user.state -StreetAddress $user.Street -Surname $user.last -UserPrincipalName $user.email -path "OU=Users,OU=CHARLIE,DC=azure,DC=contoso,DC=ad" -AccountPassword (ConvertTo-SecureString -AsPlainText P@ssw0rd -Force) -Enabled $true
-}
