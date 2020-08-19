@@ -61,7 +61,7 @@ Added shutdown schedule  to VMs
   
 Param(
   #$vmsize = 'Standard_B2s',
-  $vmsize = 'Standard_B4ms',
+  $vmsize = 'Standard_B8Ms',
   $region = 'westus2',
   $RG = 'ACLXRAYLAB',
   $shutdownTimeZone = 'Pacific Standard Time',
@@ -147,18 +147,18 @@ $artifactLocation = "$($destcontext.BlobEndPoint)$($containerName)"
 Write-Verbose "Destination SAA $($destSAStoken)"
 
 
-#$ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
-$ForestDSConfigPath = "$($PSScriptRoot)\DSC\ForestDCConfig.ps1"
+$ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
+$FabrikamDSConfigPath = "$($PSScriptRoot)\DSC\FabrikamDCConfig.ps1"
 $EUDSConfigPath = "$($PSScriptRoot)\DSC\EUDCConfig.ps1"
 
 $EUDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $EUDSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $EUDSConfigFile = $EUDSConfigURI.Split("/")[-1]
 
-#$ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-#$ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
+$ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
+$ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
 
-$ForestDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ForestDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-$ForestDSConfigFile = $ForestDSConfigURI.Split("/")[-1]
+$FabrikamDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $FabrikamDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
+$FabrikamDSConfigFile = $FabrikamDSConfigURI.Split("/")[-1]
 
   
 
@@ -185,8 +185,8 @@ $DeployParameters = @{
   "shutDownTime"                  = $shutDownTime
   "_artifactsLocation"            = $ArtifactLocation
   "_artifactsLocationSasToken"    = $artifactSASTokenSecure 
-  "ContosoDCConfigArchiveFileName" = $ForestDSConfigFile
-  "FabrikamDCConfigArchiveFileName" = $ForestDSConfigFile
+  "ContosoDCConfigArchiveFileName" = $ContosoDSConfigFile
+  "FabrikamDCConfigArchiveFileName" = $FabrikamDSConfigFile
   "EUDSCConfigAcrhiveFileName" = $EUDSConfigFile
 }
 New-AzResourceGroupDeployment @DeployParameters
