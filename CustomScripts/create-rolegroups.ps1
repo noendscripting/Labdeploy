@@ -1,4 +1,7 @@
-﻿function write-log { 
+﻿[CmdletBinding()]
+
+param()
+function write-log { 
 
 
     param(
@@ -100,6 +103,27 @@ Function add-OrganizationalUnits {
     }
     write-log "Total Added $($TotalAddedOUs)"
 }
+function add-PrivelegedUsers {
+    param (
+        [string]$ou,
+        [string]$prefix,
+        [string[]]$groups,
+        [int16]$Tier
+    )
+    get-adgroupmember "Strategic Information Systems" | Get-Random -Count 5 | ForEach-Object {
+        Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
+            $samAccountName = "$($prefix)$($_.samaccountname)"
+            $newUser = New-ADUser -Name $_.name -displayname $_.name -userprincipalname "$($prefix)$($_.samaccountname)@$((get-addomain).dnsroot)" -City $_.city -Company "Contoso" -Country US -EmailAddress $_.EmailAddress -GivenName $_.GivenName -MobilePhone $_.mobile -OfficePhone $_.OfficePhone -PostalCode $_.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
+            write-log "Added priveleged Tier $($Tier) account $($newUser.name)"
+            $groups | ForEach-Object {
+            
+                get-adgroup $PSItem | Add-ADGroupMember -members $samAccountName
+                write-log "Added $($samAccountName) to $($psitem)"
+            }
+        }
+    }
+
+}
 
 #region logging parameters
 $PSDefaultParameterValues = @{
@@ -125,15 +149,17 @@ trap { write-log -message $_.Exception -severity "ERROR"; break; }
 #region setting local domain variables
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
-$companyName = ((Get-ADDomain).Forest.Split("."))[0]
+$upnSuffix = (Get-ADDomain).domainDNS
+$companyName = (Import-csv "$PSScriptRoot\$($domainName)users.csv" | Select-Object Company -Unique ).Company
+
 #endregion
 #region adding OUs
-add-OrganizationalUnits -OUList "./ous.csv" -TargetDomainDN $domainDN
+add-OrganizationalUnits -OUList "$($PSScriptRoot)\ous.csv" -TargetDomainDN $domainDN
 #endregion
 #region adding users 
 write-log "Adding user to $($domainName)"
 
-foreach ($user in (import-csv "./$($domainName)users.csv")) {
+foreach ($user in (import-csv "$PSScriptRoot\$($domainName)users.csv")) {
     $name = $user.first + " " + $user.last
 
     $newUserObject = @{
@@ -157,28 +183,35 @@ foreach ($user in (import-csv "./$($domainName)users.csv")) {
         Enabled           = $true
         
     }
-           New-ADUser @newUserObject
-        write-log "Added user $($name)" 
+    New-ADUser @newUserObject
+    write-log "Added user $($name)" 
     Clear-Variable name
 }
 #endregion
 #region creating deparmnet groups
 write-log "Creating deparatment group"
 $_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
-$_new_groups = Get-Content "$($PSSriptRoot)\groups.txt"
+$_new_groups = Get-Content "$($PSScriptRoot)\groups.txt" 
 $_new_groups | ForEach-Object {
-        New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path $_ou
-        write-log "Created departmnet group $($_)"
+    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path $_ou
+    write-log "Created departmnet group $($_)"
 }
 #endregion
 #region creating random gneral groups
 write-log "Creating random general groups"
+$randomVerifier = @{}
 "grp-$($companyName)-general" | ForEach-Object { $_count = $(Get-Random -Minimum 1 -Maximum 40)
     for ($i = 1; $i -le $_count; $i++) {
         $_gn = $(Get-Random -Minimum 1 -Maximum 400)
-        
+        If (!($randomVerifier.ContainsKey($_gn))) {
+            Write-Verbose $_gn
             New-ADGroup "$($_)-$_gn" -SamAccountName "$($_)-$_gn" -DisplayName "$($_)-$_gn)" -GroupScope Global -GroupCategory Security -Path $_ou
-            write-log "Created general group $($_)"
+            write-log "Created general group $($_)-$_gn"
+            $randomVerifier.Add($_gn, "exists")
+        }
+        else {
+            continue
+        }
     }
 }
 #endregion
@@ -193,36 +226,44 @@ get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN
 #region create Tier 0 users
 write-log "Creating Tier 0 "
 $_ou = "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)"
-$_members = get-adgroupmember "Strategic Information Systems" 
-for ($i = 1; $i -le 5; $i++) {
-    get-aduser $($_members | get-random) -properties * | ForEach-Object {
- 
-            New-ADUser -Name $_.name -displayname $_.name -userprincipalname "EA$($_.samaccountname)@$((get-addomain).dnsroot)" -City $_.city -Company "Contoso" -Country US -EmailAddress $_.EmailAddress -GivenName $_.GivenName -MobilePhone $_.mobile -OfficePhone $_.OfficePhone -PostalCode $_.PostalCode -description "Enterprise Admin Account" -SamAccountName "EA$($_.samaccountname)" -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $_ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
-            write-log "Added priveleged account $($_.name)"
-    }    
-}
+<#get-adgroupmember "Strategic Information Systems" | Get-Random -Count 5 | ForEach-Object {
+    Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
+        New-ADUser -Name $_.name -displayname $_.name -userprincipalname "EA$($_.samaccountname)@$($domainDNS)" -City $_.city -Company "Contoso" -Country US -EmailAddress $_.EmailAddress -GivenName $_.GivenName -MobilePhone $_.mobile -OfficePhone $_.OfficePhone -PostalCode $_.PostalCode -description "Enterprise Admin Account" -SamAccountName "EA$($_.samaccountname)" -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $_ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
+        write-log "Added priveleged Tier 0 account $($_.name)"
+    }
+
+}#>
+
+add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)" -prefix "EA" -groups "Domain Admins" -Tier 0
+write-log "Creating Tier 1 "
+add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)" -prefix "EA" -groups "tier1admins", "Tier1 Server Maintenance" -Tier 1
+write-log "Creating Tier 2 "
+add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)" -prefix "EA" -groups "tier2admins", "Service Desk Operators" -Tier 2
+break
 #endregion
-#region add users to the Domain Admins Group
-get-aduser -filter * -searchbase $_ou | ForEach-Object {
+#region add users to the Domain Admins Group 
+<#get-aduser -filter * -searchbase $_ou | ForEach-Object {
     get-adgroup "Domain Admins" | Add-ADGroupMember -members $_
     write-log "Added $($_.name) to Domain Admins"
-}
+}#>
 #endregion
-break
+#region creating Tier 1 users
 $_ou = "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)"
-$_members = get-adgroupmember "StrategicInformationSystems" 
-for ($i = 1; $i -le 5; $i++) {
-    get-aduser $($_members | get-random) -properties * | ForEach-Object {
+$_members = get-adgroupmember "Strategic Information Systems" 
+get-adgroupmember "Strategic Information Systems" | Get-Random -Count 5 | ForEach-Object {
+    Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
         New-ADUser -Name $_.name -displayname $_.name -userprincipalname "SA$($_.samaccountname)@$((get-addomain).dnsroot)" -City $_.city -Company "Contoso" -Country US -EmailAddress $_.EmailAddress -GivenName $_.GivenName -MobilePhone $_.mobile -OfficePhone $_.OfficePhone -PostalCode $_.PostalCode -description "Server Admin Account" -SamAccountName "SA$($_.samaccountname)" -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $_ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
+        write-log "Added priveleged Tier 1 account $($_.name)"
     } 
 }
-
+#endregion
+#region adding Teir 1 users to Tier 1 grouos
 "tier1admins", "Tier1ServerMaintenance" | ForEach-Object { $_group = $_
     get-aduser -filter * -searchbase $_ou | ForEach-Object {
         get-adgroup $_group | Add-ADGroupMember -members $_
     }
 }
-
+#end region
 $_ou = "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)"
 $_members = get-adgroupmember "StrategicInformationSystems" 
 for ($i = 1; $i -le 5; $i++) {
