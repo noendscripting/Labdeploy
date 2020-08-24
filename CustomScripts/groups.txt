@@ -22,5 +22,3 @@ Training
 Human Resource
 Accounting
 Finance
-tier1admins
-Tier1 Server Maintenance
