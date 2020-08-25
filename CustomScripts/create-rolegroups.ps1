@@ -314,12 +314,10 @@ $_new_groups | ForEach-Object {
     $_count = $(Get-Random -Minimum 0 -Maximum 6)
     for ($i = 1; $i -le $_count; $i++) {
         $acl = Get-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)"
-        $permission = "$((get-addomain).name)\$(($groups | get-random).samaccountname)", "FullControl", "Allow"
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
+        $permission = "$((get-addomain).name)\$(($groups | get-random).samaccountname)", "FullControl","ObjectInherit","InheritOnly","Allow"
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($permission)
         $acl.SetAccessRule($accessRule)
         $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)"
-        $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat"
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
         write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat"
         }
 }
