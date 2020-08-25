@@ -112,13 +112,13 @@ Function add-PrivelegedUsers {
     get-adgroupmember "Strategic Information Systems" | Get-Random -Count 5 | ForEach-Object {
         Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
             $samAccountName = "$($prefix)$($_.samaccountname)"
-            $newUser = New-ADUser -Name $_.name -displayname $_.name -userprincipalname "$($prefix)$($_.samaccountname)@$((get-addomain).dnsroot)" -City $_.city -Company "Contoso" -Country US -EmailAddress $_.EmailAddress -GivenName $_.GivenName -MobilePhone $_.mobile -OfficePhone $_.OfficePhone -PostalCode $_.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
-            write-log "Added priveleged Tier $($Tier) account $($newUser.name)"
+            New-ADUser -Name $PSItem.name -displayname $PSItem.name -userprincipalname "$($prefix)$($PSItem.samaccountname)@$((get-addomain).dnsroot)" -City $PSItem.city -Company "Contoso" -Country US -EmailAddress $PSItem.EmailAddress -GivenName $PSItem.GivenName -MobilePhone $PSItem.mobile -OfficePhone $PSItem.OfficePhone -PostalCode $PSItem.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
+            write-log "Added priveleged Tier $($Tier) account $($PSItem.name)"
         }
     }
 
 }
-Function add-UsersToPrivelgedGroups {
+Function Add-UsersToPrivelgedGroups {
     param (
         [string]$ou,
         [string[]]$groups
@@ -126,13 +126,32 @@ Function add-UsersToPrivelgedGroups {
     )
 
     forEach ($group in $groups) {
-        get-aduser -filter * -searchbase $ou | Get-Random -Count 2 | ForEach-Object {
+        get-aduser -filter * -searchbase $ou | Get-Random -Count 3 | ForEach-Object {
             get-adgroup $group | Add-ADGroupMember -members $PSItem
             write-log "Added $($PSItem.name) to $($group)"
         }
     }
 }
+function Set-AdminOUDelegation {
+    param(
+        [string]$group,
+        [string]$csvRightsList,
+        [string]$targetOU
+    ) 
+    
+    $importedPermissions = Import-Csv $csvRightsList
+    $groupProperties = Get-ADGroup $group
+    ForEach ($importedPermission in $importedPermissions) {
+        $rightsObject = New-Object System.DirectoryServices.ActiveDirectoryAccessRule([System.Security.Principal.SecurityIdentifier]$groupProperties.SID, $importedPermission.ActiveDirectoryRights, $importedPermission.AccessControlType, [GUID]$importedPermission.ObjectType, $importedPermission.InheritanceType, [GUID]$importedPermission.InheritedObjectType)
+        $ACL = Get-Acl -path "AD:\$($targetOU)"      
+        $ACL.AddAccessRule($rightsObject)
+        Set-Acl -Path "AD:\$($targetOU)" -AclObject $ACL
+        write-log "Added group $($importedPermission.IdentityReference) permissions $($importedPermission.ActiveDirectoryRights) to $($targetOU)"
+        Clear-Variable rightsObject, ACL
+    
+    }
 
+}
 #region logging parameters
 $PSDefaultParameterValues = @{
 
@@ -152,7 +171,7 @@ if ($log.Length -ne 0) {
     }
     
 }
-trap { write-log -message $_.Exception -severity "ERROR"; break; }
+trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion 
 #region setting local domain variables
 $domainDN = (get-addomain).distinguishedname
@@ -198,15 +217,16 @@ foreach ($user in (import-csv "$PSScriptRoot\$($domainName)users.csv")) {
 #endregion
 #region creating deparmnet groups
 write-log "Creating deparatment group"
-$_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
+#$_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
 $_new_groups = Get-Content "$($PSScriptRoot)\groups.txt" 
 $_new_groups | ForEach-Object {
-    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path $_ou
+    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
     write-log "Created departmnet group $($_)"
 }
 #endregion
-
 #region creating priveleged groups
+
+write-log "Creating privilged groups"
 New-ADGroup tier0admins -SamAccountName tier0admins -DisplayName "tier0admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
 New-ADGroup "AD Infrastructure Engineers" -SamAccountName "AD Infrastructure Engineers" -DisplayName "AD Infrastructure Engineers" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
 New-ADGroup tier1admins -SamAccountName tier1admins -DisplayName "tier1admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"
@@ -214,26 +234,28 @@ New-ADGroup "Tier1 Server Maintenance" -SamAccountName "Tier1 Server Maintenance
 New-ADGroup "tier2admins" -SamAccountName "tier2admins" -DisplayName "tier2admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 2,OU=Admin,$($domainDN)"
 New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -DisplayName "Service Desk Operators" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 2,OU=Admin,$($domainDN)"
 
+write-log "Adding AD Infrastructure Engineers to Domain Admins"
+$privlegedADGroup = Get-ADGroup "AD Infrastructure Engineers"
+Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
+
+write-log "Setting up delegations in Admin OUs"
+
+0..2 | ForEach-Object {
+
+    Set-AdminOUDelegation -group "tier$($PSItem)admins" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
+
+}
+
 #endregion
 #region creating random gneral groups
 write-log "Creating random general groups"
-$randomVerifier = @{}
-"grp-$($companyName)-general" | ForEach-Object { $_count = $(Get-Random -Minimum 1 -Maximum 40)
-    for ($i = 1; $i -le $_count; $i++) {
-        $_gn = $(Get-Random -Minimum 1 -Maximum 400)
-        If (!($randomVerifier.ContainsKey($_gn))) {
-            Write-Verbose $_gn
-            New-ADGroup "$($_)-$_gn" -SamAccountName "$($_)-$_gn" -DisplayName "$($_)-$_gn)" -GroupScope Global -GroupCategory Security -Path $_ou
-            write-log "Created general group $($_)-$_gn"
-            $randomVerifier.Add($_gn, "exists")
-        }
-        else {
-            continue
-        }
-    }
+1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
+    $groupName = "grp-$($companyName)-general-$($psitem)"
+    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope Global -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
+    write-log "Created general group $($groupName)"
 }
 #endregion
-#region populatuing departmnent groups with users
+#region populatuing departmnent groups with users and adding departmnet value to the user properties
 get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | ForEach-Object {
     $_department = $_new_groups | get-random
     $_ | Set-ADUser  -department $_department
@@ -254,7 +276,8 @@ add-UsersToPrivelgedGroups -groups "tier0admins", "AD Infrastructure Engineers" 
 add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)"
 add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)"
 #endregion
-break
+#region populating generic groups with users
+write-log "Adding random usere to generic groups"
 $_ou = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 $_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
 get-aduser -filter * -searchbase $_ou | ForEach-Object {
@@ -264,7 +287,9 @@ get-aduser -filter * -searchbase $_ou | ForEach-Object {
         Add-ADGroupMember -Identity $($_groups | get-random) -Members $_
     }
 }
-
+#endregion
+#region populating generic groups with other generic groups
+write-log "Nesting random generic groups inside each outher"
 $groups = get-adgroup -filter 'samaccountname -like "grp-*"'
 get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
     $_.DistinguishedName
@@ -275,10 +300,14 @@ get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
         Add-ADGroupMember -Identity $($groups | get-random) -Members $_
     }
 }
+#endregion 
 
 
-#create sysvol files and folders gives random
-$_new_groups | foreach {
+
+
+#region create sysvol files and folders gives random
+write-log "Creating deparment login script and assign permissions from generic groups"
+$_new_groups | ForEach-Object {
     New-Item "C:\Windows\SYSVOL\domain\scripts\$($_)\" -type directory
     New-Item "C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat" -type file
     $groups = get-adgroup -filter 'samaccountname -like "grp-files*"'
@@ -290,10 +319,43 @@ $_new_groups | foreach {
         $acl.SetAccessRule($accessRule)
         $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)"
         $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat"
-    }
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
+        write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat"
+        }
+}
+#endregion
+#region assign CEO
+write-log "Adding CEO"
+$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random 
+$ceo | Set-ADUser  -department "Executive" -Title "CEO"
+#endregion
+
+
+#region create manager\report entries for each department
+write-log "Adding Managers and their reports"
+$_new_groups | ForEach-Object { $gname = $_
+    $Manager = get-adgroupmember $gname  | get-random | get-aduser 
+    $Manager | Set-ADUser  -Title "Manager"
+    get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
+}
+#endregion
+write-log 'Creating exec and assign reporting'
+1..5 | ForEach-Object {
+    get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random | Set-ADUser  -department "Executive" -Title "President" -manager $ceo.DistinguishedName
 }
 
-#domain controller random domain admin file rights
+
+write-log 'Assign reports to managers'
+$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "CEO"
+$execs = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "President"
+get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "Manager" | ForEach-Object {
+    $_ | set-aduser -manager ($execs | get-random).distinguishedname
+}
+
+
+break
+
+#region domain controller random domain admin file rights
 Add-WindowsFeature RSAT-AD-PowerShell
 
 New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
@@ -325,37 +387,4 @@ $_new_groups | foreach {
 
 New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
 
-get-adgroup -filter 'samaccountname -like "grp-*"' | foreach {
-    $_group_name = "grp-contoso-general-$(Get-Random -Minimum 1 -Maximum 300)"
-    $_ | Rename-ADObject -NewName $_group_name
-
-}
-"grp-fabrikam-general" | foreach { $_count = $(Get-Random -Minimum 1 -Maximum 40)
-    for ($i = 1; $i -le 10; $i++) {
-        $_gn = $(Get-Random -Minimum 1 -Maximum 100)
-        New-ADGroup "$($_)-$_gn" -SamAccountName "$($_)-$_gn" -DisplayName "$($_)-$_gn)" -GroupScope Global -GroupCategory Security -Path $_ou
-    }
-}
-
-
-
-
-$_new_groups | foreach { $gname = $_
-    $Manager = get-adgroupmember $gname  | get-random | get-aduser 
-    $Manager | Set-ADUser  -department $gname -Title "Manager"
-    get-adgroupmember $gname | where samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
-}
-
-$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random 
-$ceo | Set-ADUser  -department "Executive" -Title "CEO"
-
-1..5 | foreach {
-    get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random | Set-ADUser  -department "Executive" -Title "President" -manager $ceo.DistinguishedName
-}
-
-$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | where Title -eq "CEO"
-$execs = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | where Title -eq "President"
-$execs | foreach { $_ | set-aduser -Manager $ceo.DistinguishedName }
-get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | where Title -eq "Manager" | foreach {
-    $_ | set-aduser -manager ($execs | get-random).distinguishedname
-}
+#endregion

@@ -1,0 +1,4 @@
+"ActiveDirectoryRights","InheritanceType","ObjectType","InheritedObjectType","ObjectFlags","AccessControlType","IsInherited","InheritanceFlags","PropagationFlags"
+"GenericAll","Descendents","00000000-0000-0000-0000-000000000000","bf967aba-0de6-11d0-a285-00aa003049e2","InheritedObjectAceTypePresent","Allow","False","ContainerInherit","InheritOnly"
+"ReadProperty, WriteProperty","All","f30e3bbf-9ff0-11d1-b603-0000f80367c1","00000000-0000-0000-0000-000000000000","ObjectAceTypePresent","Allow","False","ContainerInherit","None"
+"CreateChild, DeleteChild","All","bf967a9c-0de6-11d0-a285-00aa003049e2","00000000-0000-0000-0000-000000000000","ObjectAceTypePresent","Allow","False","ContainerInherit","None"
