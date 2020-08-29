@@ -195,7 +195,7 @@ trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception
 #region setting local domain variables
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
-$companyName = (Import-csv "$PSScriptRoot\$($domainName)users.csv" | Select-Object Company -Unique ).Company
+$companyName = (Import-csv "$PSScriptRoot\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 
 #endregion
 #region adding OUs
@@ -204,7 +204,7 @@ add-OrganizationalUnits -OUList "$($PSScriptRoot)\ous.txt" -TargetDomainDN $doma
 #region adding users 
 write-log "Adding user to $($domainName)"
 
-foreach ($user in (import-csv "$PSScriptRoot\$($domainName)users.csv")) {
+foreach ($user in (import-csv "$PSScriptRoot\$($domainName)-users.csv")) {
     $name = $user.first + " " + $user.last
 
     $newUserObject = @{

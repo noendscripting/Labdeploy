@@ -92,7 +92,7 @@ Configuration DcConfig
         {
             DomainName = $DomainName
             DependsOn =  '[WindowsFeature]ADDS_Install'
-			WaitTimeout = 900
+			WaitTimeout = 3600
 			WaitForValidCredentials = $true
 			Credential = $DomainAdminCredentials
             

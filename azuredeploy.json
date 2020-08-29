@@ -248,20 +248,21 @@
     "eucontosodcDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
     "fabrikamDNSServerIP": "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]",
     "ContosoDscConfigurationFunction": "DcConfig",
-    "ContosoDscConfigurationScript": "ForestDCConfig.ps1",
+    "ContosoDscConfigurationScript": "ContosoDCConfig.ps1",
     "EUDscConfigurationFunction": "DcConfig",
     "EUDscConfigurationScript": "EUDCConfig.ps1",
     "FabrikamDscConfigurationFunction": "DCConfig",
-    "FabrikamDscConfigurationScript": "ForestDCConfig.ps1",
+    "FabrikamDscConfigurationScript": "FabrikamDCConfig.ps1",
 
     "CustomScriptScriptFolder": "CustomScripts",
-    "CustomScriptScriptFileName": "CustomScript.ps1",
+    "CustomScriptScriptFileName": "create-usersGroupsACLs.ps1",
     "CustomScriptScriptContent": [
-      "contosoad-Users.csv",
-      "fabrikam-users.csv",
-      "Groups.csv",
-      "Members.csv",
-      "OUs.csv"
+      "contosoad-users.csv",
+      "fabrikamad-users.csv",
+      "eu-users.csv",
+      "groups.txt",
+      "OUs.txt",
+      "ou-rights.csv"
     ]
 
   },
@@ -889,7 +890,7 @@
         "DisplayName": "ChildDCSextension"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"        
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[2].virtualMachineName)]"        
          ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -926,6 +927,40 @@
         }
       }
     },
+    {
+          "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCImportScript')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+           "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[copyIndex()].virtualMachineName,concat(variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig'))]"        
+          ],
+          "tags": {
+            "displayName": "DCImportScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[0], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+            }
+          },
+          "copy": {
+            "count":1,
+            "name": "DCCustomScript"
+          } 
+        },
     //Shutdown Schedule
     {
       "apiVersion": "2018-09-15",
@@ -964,8 +999,8 @@
       "apiVersion": "2018-05-01",
       "name": "set-VNET-DNS",
       "dependsOn": [
-        "ContosoForestConfig"
-      ],
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"        
+         ], 
       "properties": {
         "mode": "Incremental",
         "template": {
