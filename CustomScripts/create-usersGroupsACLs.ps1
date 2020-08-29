@@ -311,11 +311,12 @@ get-aduser -filter * -searchbase $_ou | ForEach-Object {
     $_groups | Get-Random -Count $_group_count | ForEach-Object {
 
         Add-ADGroupMember -Identity $PSItem -Members $_user
-        write-log "Addded user $($user.display) to group $($PSItem)"
+        write-log "Addded user $($_user.display) to group $($PSItem)"
     }
+    Clear-Variable _user
     <#for ($i = 1; $i -le $_group_count; $i++) {
         
-        
+       
     }#>
 }
 #endregion
