@@ -112,7 +112,7 @@ Function add-PrivelegedUsers {
     get-adgroupmember "Strategic Information Systems" | Get-Random -Count 5 | ForEach-Object {
         Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
             $samAccountName = "$($prefix)$($_.samaccountname)"
-            New-ADUser -Name $PSItem.name -displayname $PSItem.name -userprincipalname "$($prefix)$($PSItem.samaccountname)@$((get-addomain).dnsroot)" -City $PSItem.city -Company "Contoso" -Country US -EmailAddress $PSItem.EmailAddress -GivenName $PSItem.GivenName -MobilePhone $PSItem.mobile -OfficePhone $PSItem.OfficePhone -PostalCode $PSItem.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
+            New-ADUser -Name $PSItem.name -displayname $PSItem.name -userprincipalname "$($samAccountName)@$($upnSuffix)" -City $PSItem.city -Company "Contoso" -Country US -EmailAddress $PSItem.EmailAddress -GivenName $PSItem.GivenName -MobilePhone $PSItem.mobile -OfficePhone $PSItem.OfficePhone -PostalCode $PSItem.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
             write-log "Added priveleged Tier $($Tier) account $($PSItem.name)"
         }
     }
@@ -132,7 +132,7 @@ Function Add-UsersToPrivelgedGroups {
         }
     }
 }
-function Set-AdminOUDelegation {
+function Set-OuDelegatiion {
     param(
         [string]$group,
         [string]$csvRightsList,
@@ -150,6 +150,25 @@ function Set-AdminOUDelegation {
         Clear-Variable rightsObject, ACL
     
     }
+
+}
+
+function set-CustomACLs
+{
+     param(
+         [string]$TargetPath,
+         [string]$IdenitylRefrence,
+         [string]$FileSystemRights,
+         [string]$InheritanceFlags,
+         [string]$PropagationFlags,
+         [string]$AccessControlType
+     )
+
+    $acl = Get-Acl $TargetPath
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence,$FileSystemRights,$InheritanceFlags,$PropagationFlags,$AccessControlType)
+    $acl.SetAccessRule($accessRule)
+    $acl | Set-Acl $TargetPath
+    write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
 
 }
 #region logging parameters
@@ -176,7 +195,6 @@ trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception
 #region setting local domain variables
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
-$upnSuffix = (Get-ADDomain).domainDNS
 $companyName = (Import-csv "$PSScriptRoot\$($domainName)users.csv" | Select-Object Company -Unique ).Company
 
 #endregion
@@ -225,7 +243,6 @@ $_new_groups | ForEach-Object {
 }
 #endregion
 #region creating priveleged groups
-
 write-log "Creating privilged groups"
 New-ADGroup tier0admins -SamAccountName tier0admins -DisplayName "tier0admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
 New-ADGroup "AD Infrastructure Engineers" -SamAccountName "AD Infrastructure Engineers" -DisplayName "AD Infrastructure Engineers" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
@@ -237,15 +254,14 @@ New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -D
 write-log "Adding AD Infrastructure Engineers to Domain Admins"
 $privlegedADGroup = Get-ADGroup "AD Infrastructure Engineers"
 Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
-
-write-log "Setting up delegations in Admin OUs"
+#endregion
+#region Adding OU delegattions
+write-log "Setting up delegations in OUs"
 
 0..2 | ForEach-Object {
-
-    Set-AdminOUDelegation -group "tier$($PSItem)admins" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
-
+    Set-OuDelegatiion -group "tier$($PSItem)admins" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
 }
-
+Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 #endregion
 #region creating random gneral groups
 write-log "Creating random general groups"
@@ -263,6 +279,15 @@ get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN
     write-log "Added user $($_) to Depratmnet group $($_department)"
 }
 #endregion
+#region create manager\report entries for each department
+write-log "Adding Managers and their reports"
+$_new_groups | ForEach-Object { $gname = $_
+    $Manager = get-adgroupmember $gname  | get-random | get-aduser 
+    $Manager | Set-ADUser  -Title "Manager"
+    get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
+    write-log "Added $($manager.Name) as Manager to members of group $($gname)"
+}
+#endregion
 #region create privleged users
 write-log "Creating Tier 0 "
 add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)" -prefix "EA" -Tier 0
@@ -277,15 +302,21 @@ add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou
 add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)"
 #endregion
 #region populating generic groups with users
-write-log "Adding random usere to generic groups"
+write-log "Adding random users to generic groups"
 $_ou = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 $_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
 get-aduser -filter * -searchbase $_ou | ForEach-Object {
     $_group_count = Get-Random -Minimum 1 -Maximum 10
-    for ($i = 1; $i -le $_group_count; $i++) {
-        
-        Add-ADGroupMember -Identity $($_groups | get-random) -Members $_
+    $_user = $PSItem
+    $_groups | Get-Random -Count $_group_count | ForEach-Object {
+
+        Add-ADGroupMember -Identity $PSItem -Members $_user
+        write-log "Addded user $($user.display) to group $($PSItem)"
     }
+    <#for ($i = 1; $i -le $_group_count; $i++) {
+        
+        
+    }#>
 }
 #endregion
 #region populating generic groups with other generic groups
@@ -299,60 +330,37 @@ get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
         
         Add-ADGroupMember -Identity $($groups | get-random) -Members $_
     }
+  Write-log "Added $($_group_count) to group $($_.Name)"
 }
 #endregion 
-
-
-
-
 #region create sysvol files and folders gives random
 write-log "Creating deparment login script and assign permissions from generic groups"
-$_new_groups | ForEach-Object {
-    New-Item "C:\Windows\SYSVOL\domain\scripts\$($_)\" -type directory
-    New-Item "C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat" -type file
-    $groups = get-adgroup -filter 'samaccountname -like "grp-files*"'
-    $_count = $(Get-Random -Minimum 0 -Maximum 6)
-    for ($i = 1; $i -le $_count; $i++) {
-        $acl = Get-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)"
-        $permission = "$((get-addomain).name)\$(($groups | get-random).samaccountname)", "FullControl","ObjectInherit","InheritOnly","Allow"
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($permission)
-        $acl.SetAccessRule($accessRule)
-        $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($_)"
-        write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to C:\Windows\SYSVOL\domain\scripts\$($_)\logon.bat"
-        }
+
+foreach($group in $_new_groups)
+{
+    $_folderResult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\" -type directory
+    write-log "Created directory $($_folderResult.FullName)"
+    $_fileREsult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\logon.bat" -type file
+    write-log "Created file $($_fileREsult.FullName)"
+    <#$acl = Get-Acl "C:\Windows\SYSVOL\domain\scripts\$($group)"
+    $permission = "$((get-addomain).name)\$($group)", "FullControl","ObjectInherit","InheritOnly","Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($permission)
+    $acl.SetAccessRule($accessRule)
+    $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($group)"
+    write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to C:\Windows\SYSVOL\domain\scripts\$($group)\logon.bat"
+    #>
+    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
-#region assign CEO
-write-log "Adding CEO"
-$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random 
-$ceo | Set-ADUser  -department "Executive" -Title "CEO"
-#endregion
 
 
-#region create manager\report entries for each department
-write-log "Adding Managers and their reports"
-$_new_groups | ForEach-Object { $gname = $_
-    $Manager = get-adgroupmember $gname  | get-random | get-aduser 
-    $Manager | Set-ADUser  -Title "Manager"
-    get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
-}
-#endregion
-write-log 'Creating exec and assign reporting'
-1..5 | ForEach-Object {
-    get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | get-random | Set-ADUser  -department "Executive" -Title "President" -manager $ceo.DistinguishedName
-}
 
 
-write-log 'Assign reports to managers'
-$ceo = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "CEO"
-$execs = get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "President"
-get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" -Properties title | Where-Object Title -eq "Manager" | ForEach-Object {
-    $_ | set-aduser -manager ($execs | get-random).distinguishedname
-}
+
 
 
 break
-
+<#
 #region domain controller random domain admin file rights
 Add-WindowsFeature RSAT-AD-PowerShell
 
@@ -361,7 +369,7 @@ New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost
 #fileshare
 $_new_groups = "Logistics", "Information Technology", "IT Support", "Strategic Information Systems", "Data Entry", "Research and Development", "Strategic Sourcing", "Purchasing", "Strategic Sourcing", "Operations", "Public Relations", "Corporate Communications", "Advertising", "Market Research", "Strategic Marketing", "Customer service", "Telesales", "Account Management", "Marketing", "Sales", "Payroll", "Recruitment", "Training", "Human Resource", "Accounting", "Financial"
 
-$_new_groups | foreach {
+$_new_groups | ForEach-Object {
     $_group = $(($_).replace(" ", ""))
     #New-Item "C:\File_Share\$($_)\" -type directory
     New-SMBShare –Name $_ –Path "C:\File_Share\$($_)\" –FullAccess "contoso\$_group"
@@ -385,4 +393,4 @@ $_new_groups | foreach {
 
 New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
 
-#endregion
+#>
