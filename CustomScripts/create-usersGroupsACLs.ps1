@@ -342,14 +342,7 @@ foreach($group in $_new_groups)
     $_folderResult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\" -type directory
     write-log "Created directory $($_folderResult.FullName)"
     $_fileREsult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\logon.bat" -type file
-    write-log "Created file $($_fileREsult.FullName)"
-    <#$acl = Get-Acl "C:\Windows\SYSVOL\domain\scripts\$($group)"
-    $permission = "$((get-addomain).name)\$($group)", "FullControl","ObjectInherit","InheritOnly","Allow"
-    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($permission)
-    $acl.SetAccessRule($accessRule)
-    $acl | Set-Acl "C:\Windows\SYSVOL\domain\scripts\$($group)"
-    write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to C:\Windows\SYSVOL\domain\scripts\$($group)\logon.bat"
-    #>
+    write-log "Created file $($_fileREsult.FullName)"   
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
