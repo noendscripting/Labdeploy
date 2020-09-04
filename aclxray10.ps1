@@ -56,7 +56,7 @@ Added shutdown schedule  to VMs
 #This is for internal Microsoft use only
 
 #>
-#Requires -Modules @{ ModuleName="Az"; ModuleVersion="4.5.0" }
+#Requires -Modules Az
 [CmdletBinding()]
   
 Param(
@@ -84,7 +84,7 @@ if ([string]::IsNullOrEmpty($currentContext)) {
 
 #verifying deployimnet subscription
 <#$title = "ACLXRAY Lab deployment"
-$message = "You are about to deploy 7 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
+$message = "You are about to deploy 6 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
 $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
 $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
 $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
