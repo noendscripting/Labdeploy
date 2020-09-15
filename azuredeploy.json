@@ -214,15 +214,20 @@
           "virtualMachineName": "contosofs1",
           "subnetRef": "[variables('subnetRef')[0]]",
           "vmSize": "[parameters('virtualMachineSize')]",
-          "sku": "2012-R2-Datacenter",
+          "sku": "2016-Datacenter",
           "domainName": "contosoad.com",
-          "user": "[concat('contosoad\\',parameters('AdminUserName'))]"
+          "user": "[concat('contosoad\\',parameters('AdminUserName'))]",
+          "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
+          "CustoimScriptURis": [
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
+          ]
         },
         {
           "virtualMachineName": "fabrikamfs1",
           "subnetRef": "[variables('subnetRef')[1]]",
           "vmSize": "[parameters('virtualMachineSize')]",
-          "sku": "2012-R2-Datacenter",
+          "sku": "2019-Datacenter",
           "domainName": "fabrikamad.com",
           "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]"
         },
@@ -230,8 +235,8 @@
           "virtualMachineName": "eufs1",
           "subnetRef": "[variables('subnetRef')[0]]",
           "vmSize": "[parameters('virtualMachineSize')]",
-          "sku": "2012-R2-Datacenter",
-          "domainName": "eu.contoso.com",
+          "sku": "2016-Datacenter",
+          "domainName": "eu.contosoad.com",
           "user": "[concat('eu\\',parameters('AdminUserName'))]"
         }
 
@@ -292,7 +297,8 @@
       "eu-users.csv",
       "groups.txt",
       "OUs.txt",
-      "ou-rights.csv"
+      "ou-rights.csv",
+      "create-fileServerACLs.ps1"
     ]
 
   },
@@ -588,7 +594,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "PublicIPCopy",
-        "Microsoft.Resources/deployments/set-VNET-DNS" 
+        "Microsoft.Resources/deployments/set-VNET-DNS"
       ],
       "tags": {
         "displayName": "File Server NIC Loop"
@@ -608,7 +614,10 @@
               }
             }
           }
-        ]
+        ],
+        "dnsSettings": {
+          "dnsServers": [ "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]" ]
+        }
 
       },
       "copy": {
@@ -616,32 +625,32 @@
         "count": 3
       }
     },
-    //FOREST DCs
+    //CONTOSOAD DC
     {
-      "name": "[variables('VMBuildParams').params[copyIndex()].virtualMachineName]",
+      "name": "[variables('VMBuildParams').params[0].virtualMachineName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[copyIndex()])]"
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[0])]"
       ],
       "tags": {
-        "displayName": "Forest-DC-Build-Loop"
+        "displayName": "CONTOSOAD-DC"
       },
       "properties": {
         "osProfile": {
-          "computerName": "[variables('VMBuildParams').params[copyIndex()].virtualMachineName]",
+          "computerName": "[variables('VMBuildParams').params[0].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('VMBuildParams').params[copyIndex()].vmSize]"
+          "vmSize": "[variables('VMBuildParams').params[0].vmSize]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "[variables('VMBuildParams').params[copyIndex()].sku]",
+            "sku": "[variables('VMBuildParams').params[0].sku]",
             "version": "latest"
           },
           "osDisk": {
@@ -652,17 +661,162 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[copyIndex()])]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[0])]"
             }
           ]
 
         }
 
       },
-      "copy": {
-        "name": "ForestBuild",
-        "count": 2
-      }
+      "resources": [
+        {
+          "name": "[concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig')]",
+          "type": "extensions",
+          "apiVersion": "2019-03-01",
+
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "DisplayName": "ContosoDCSextensions"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.26",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "wmfVersion": "latest",
+
+              "configuration": {
+                "script": "[variables('VMBuildParams').params[0].script]",
+                "url": "[variables('VMBuildParams').params[0].url]",
+                "function": "[variables('VMBuildParams').params[0].function]"
+
+              },
+              "configurationArguments": {
+                "nodeName": "localhost",
+                "domainName": "[variables('VMBuildParams').params[0].domainName]",
+                "NetBiosDomainname": "[variables('VMBuildParams').params[0].NetBiosDomainname]",
+                "ForwarderIPaddress": "[variables('VMBuildParams').params[0].ForwarderIPaddress]",
+                "ForwarderDomain": "[variables('VMBuildParams').params[0].ForwarderDomain]",
+                "TimeZone": "[parameters('shutdownTimeZone')]"
+
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationArguments": {
+                "DomainAdminCredentials": {
+                  "UserName": "[concat(variables('VMBuildParams').params[0].NetBiosDomainname,'\\',variables('VMBuildParams').params[0].user)]",
+                  "Password": "[parameters('AdminPassword')]"
+                },
+                "SafemodeAdministrator": {
+                  "UserName": "[variables('VMBuildParams').params[0].user]",
+                  "Password": "[parameters('AdminPassword')]"
+                }
+              }
+            }
+          }
+        }
+
+      ]
+    },
+    //FABRIKAMAD DC
+    {
+      "name": "[variables('VMBuildParams').params[1].virtualMachineName]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
+      ],
+      "tags": {
+        "displayName": "FABRIKAMAD-DC"
+      },
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('VMBuildParams').params[1].virtualMachineName]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('VMBuildParams').params[1].vmSize]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[variables('VMBuildParams').params[1].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[1])]"
+            }
+          ]
+
+        }
+
+      },
+      "resources": [
+        {
+          "name": "[concat(variables('VMBuildParams').params[1].NetBiosDomainname,'-DCConfig')]",
+          "type": "extensions",
+          "apiVersion": "2019-03-01",
+
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "DisplayName": "FabrikamDCSextensions"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[1].virtualMachineName)]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.26",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "wmfVersion": "latest",
+
+              "configuration": {
+                "script": "[variables('VMBuildParams').params[1].script]",
+                "url": "[variables('VMBuildParams').params[1].url]",
+                "function": "[variables('VMBuildParams').params[1].function]"
+
+              },
+              "configurationArguments": {
+                "nodeName": "localhost",
+                "domainName": "[variables('VMBuildParams').params[1].domainName]",
+                "NetBiosDomainname": "[variables('VMBuildParams').params[1].NetBiosDomainname]",
+                "ForwarderIPaddress": "[variables('VMBuildParams').params[1].ForwarderIPaddress]",
+                "ForwarderDomain": "[variables('VMBuildParams').params[1].ForwarderDomain]",
+                "TimeZone": "[parameters('shutdownTimeZone')]"
+
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationArguments": {
+                "DomainAdminCredentials": {
+                  "UserName": "[variables('VMBuildParams').params[1].user]",
+                  "Password": "[parameters('AdminPassword')]"
+                }
+              }
+            }
+          }
+        }
+
+      ]
     },
     // EU DC
     {
@@ -707,7 +861,57 @@
 
         }
 
-      }
+      },
+      "resources": [
+        {
+          "name": "[concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig')]",
+          "type": "extensions",
+          "apiVersion": "2019-03-01",
+
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "DisplayName": "EUDCSextensions"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[2].virtualMachineName)]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.26",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "wmfVersion": "latest",
+
+              "configuration": {
+                "script": "[variables('VMBuildParams').params[2].script]",
+                "url": "[variables('VMBuildParams').params[2].url]",
+                "function": "[variables('VMBuildParams').params[2].function]"
+
+              },
+              "configurationArguments": {
+                "nodeName": "localhost",
+                "domainName": "[variables('VMBuildParams').params[2].domainName]",
+                "NetBiosDomainname": "[variables('VMBuildParams').params[2].NetBiosDomainname]",
+                "ForwarderIPaddress": "[variables('VMBuildParams').params[2].ForwarderIPaddress]",
+                "ForwarderDomain": "[variables('VMBuildParams').params[2].ForwarderDomain]",
+                "TimeZone": "[parameters('shutdownTimeZone')]"
+
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
+              "configurationArguments": {
+                "DomainAdminCredentials": {
+                  "UserName": "[variables('VMBuildParams').params[2].user]",
+                  "Password": "[parameters('AdminPassword')]"
+                }
+              }
+            }
+          }
+        }
+
+      ]
     },
 
     //File Server Loop
@@ -717,6 +921,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "DCCustomScript",
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),3)])]"
       ],
       "tags": {
@@ -761,249 +966,108 @@
         "count": 3
       }
     },
+    // File server custom script loop
     {
-          "comments": "Join domain - JsonADDomainExtension",
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'/joindomain')]",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-           "MemberServer"
-          ],
-          "tags":{
-            "displayName":"joinDomain"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "autoUpgradeMinorVersion": true,
-            "type": "JsonADDomainExtension",
-            "typeHandlerVersion": "1.3",
-            "settings": {
-              "Name": "[variables('VMBuildParams').params[add(copyIndex(),3)].domainName]",
-              "User": "[variables('VMBuildParams').params[add(copyIndex(),3)].user]",
-              "Restart": "true",
-              "Options": 3
-            },
-            "protectedsettings": {
-              "Password": "[parameters('AdminPassword')]"
-            }
-          },
-          "copy":{
-            "name":"joindomain",
-            "count": 3
-          }
-        },
-//ADMT1
-/* {
-      "name": "[variables('VMNames')[3]]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
+      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'/',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'-FSCustomScript')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('fabrikamfsNICName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,concat('joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName))]"
       ],
       "tags": {
-        "displayName": "ADMT"
+        "displayName": "FCConfugScript"
       },
       "properties": {
-        "osProfile": {
-          "computerName": "[variables('VMNames')[3]]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "windowsConfiguration": {
-            "provisionVmAgent": "true"
-          }
-        },
-        "hardwareProfile": {
-          "vmSize": "[parameters('virtualMachineSize')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServer",
-            "offer": "WindowsServer",
-            "sku": "[parameters('sku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "createOption": "FromImage",
-            "caching": "ReadWrite"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('fabrikamfsNICName'))]"
-            }
-          ]
-
-        }
-
-      },
-      "resources": [
-        // Join domain - Json AD Domain Extension
-        {
-          "comments": "Join domain - JsonADDomainExtension",
-          "apiVersion": "2015-06-15",
-          "type": "extensions",
-          "name": "joinDomain",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[3])]",
-            "[concat('Microsoft.Compute/virtualMachines/',variables('VMNames')[0],'/extensions/DCConfig1')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Compute",
-
-            "type": "JsonADDomainExtension",
-            "typeHandlerVersion": "1.0",
-            "settings": {
-              "Name": "[parameters('domain2Name')]",
-              "User": "[concat(parameters('domain1Name'),'\\', parameters('AdminUserName'))]",
-              "Restart": "true",
-              "Options": 3
-            },
-            "protectedsettings": {
-              "Password": "[parameters('AdminPassword')]"
-            }
-          }
-        }
-      ]
-    },*/
-    //Forest DSC Extension
-    {
-      "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2019-03-01",
-
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "DisplayName": "ForestDCSextensions"
-      },
-      "dependsOn": [
-
-        "ForestBuild"  ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.26",
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "wmfVersion": "latest",
-
-          "configuration": {
-            "script": "[variables('VMBuildParams').params[copyIndex()].script]",
-            "url": "[variables('VMBuildParams').params[copyIndex()].url]",
-            "function": "[variables('VMBuildParams').params[copyIndex()].function]"
-
-          },
-          "configurationArguments": {
-            "nodeName": "localhost",
-            "domainName": "[variables('VMBuildParams').params[copyIndex()].domainName]",
-            "NetBiosDomainname": "[variables('VMBuildParams').params[copyIndex()].NetBiosDomainname]",
-            "ForwarderIPaddress": "[variables('VMBuildParams').params[copyIndex()].ForwarderIPaddress]",
-            "ForwarderDomain": "[variables('VMBuildParams').params[copyIndex()].ForwarderDomain]",
-            "TimeZone": "[parameters('shutdownTimeZone')]"
-
-          }
-        },
-        "protectedSettings": {
-          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
-          "configurationArguments": {
-            "DomainAdminCredentials": {
-              "UserName": "[variables('VMBuildParams').params[copyIndex()].user]",
-              "Password": "[parameters('AdminPassword')]"
-            }
-          }
+          "fileUris": 
+            "[variables('VMBuildParams').params[add(copyIndex(),3)].CustoimScriptURis]"
+            ,
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('VMBuildParams').params[add(copyIndex(),3)].CustomScriptFileName)]"
         }
       },
       "copy": {
-        "name": "ContosoForestConfig",
-        "count": 2
+        "count": 1,
+        "name": "FSCustomScript"
       }
-
     },
-    //Child DSC Extension
+    //Join Domain Loop
     {
-      "name": "[concat(variables('VMBuildParams').params[2].virtualMachineName,'/',variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig')]",
+      "comments": "Join domain - JsonADDomainExtension",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2019-03-01",
+      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'/joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName)]",
       "location": "[resourceGroup().location]",
-      "tags": {
-        "DisplayName": "ChildDCSextension"
-      },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[2].virtualMachineName)]"        
-         ],
+        "MemberServer",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[1].virtualMachineName,concat(variables('VMBuildParams').params[1].NetBiosDomainname,'-DCConfig'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"
+      ],
+      "tags": {
+        "displayName": "joinDomain"
+      },
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.26",
+        "publisher": "Microsoft.Compute",
         "autoUpgradeMinorVersion": true,
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
         "settings": {
-          "wmfVersion": "latest",
-
-          "configuration": {
-            "script": "[variables('VMBuildParams').params[2].script]",
-            "url": "[variables('VMBuildParams').params[2].url]",
-            "function": "[variables('VMBuildParams').params[2].function]"
-
-          },
-          "configurationArguments": {
-            "nodeName": "localhost",
-            "domainName": "[variables('VMBuildParams').params[2].domainName]",
-            "NetBiosDomainname": "[variables('VMBuildParams').params[2].NetBiosDomainname]",
-            "ForwarderIPaddress": "[variables('VMBuildParams').params[2].ForwarderIPaddress]",
-            "ForwarderDomain": "[variables('VMBuildParams').params[2].ForwarderDomain]",
-            "TimeZone": "[parameters('shutdownTimeZone')]"
-
-          }
+          "Name": "[variables('VMBuildParams').params[add(copyIndex(),3)].domainName]",
+          "User": "[variables('VMBuildParams').params[add(copyIndex(),3)].user]",
+          "Restart": "true",
+          "Options": 3
         },
-        "protectedSettings": {
-          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
-          "configurationArguments": {
-            "DomainAdminCredentials": {
-              "UserName": "[variables('VMBuildParams').params[2].user]",
-              "Password": "[parameters('AdminPassword')]"
-            }
-          }
+        "protectedsettings": {
+          "Password": "[parameters('AdminPassword')]"
         }
+      },
+      "copy": {
+        "name": "joindomain",
+        "count": 3
       }
     },
+
     // DC Import Custom Script
     {
-          "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCImportScript')]",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [
-           "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[copyIndex()].virtualMachineName,concat(variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig'))]"        
+      "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCImportScript')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[copyIndex()].virtualMachineName,concat(variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig'))]"
+
+      ],
+      "tags": {
+        "displayName": "DCImportScript"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[0], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]"
           ],
-          "tags": {
-            "displayName": "DCImportScript"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[0], parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
-            }
-          },
-          "copy": {
-            "count":3,
-            "name": "DCCustomScript"
-          } 
-        },
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+        }
+      },
+      "copy": {
+        "count": 3,
+        "name": "DCCustomScript"
+      }
+    },
     //Shutdown Schedule
     {
       "apiVersion": "2018-09-15",
@@ -1042,8 +1106,8 @@
       "apiVersion": "2018-05-01",
       "name": "set-VNET-DNS",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"        
-         ], 
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"
+      ],
       "properties": {
         "mode": "Incremental",
         "template": {

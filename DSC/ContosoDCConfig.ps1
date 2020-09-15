@@ -8,6 +8,7 @@ Configuration DcConfig
 		[Parameter(Mandatory=$true)]
         [ValidateNotNullorEmpty()]
 		[PSCredential]$DomainAdminCredentials,
+		[pscredential]$SafemodeAdministrator,
         [string]$DomainName,
 		[string]$NetBiosDomainname,
 		[string]$ForwarderIPaddress,
@@ -17,7 +18,7 @@ Configuration DcConfig
 	)
 
 	Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc
-	Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.4.0
+	Import-DscResource -ModuleName ComputerManagementDsc
 	
 
 
@@ -83,7 +84,7 @@ Configuration DcConfig
 		{ 
 			DomainName = $DomainName           
 			Credential = $DomainAdminCredentials
-			SafemodeAdministratorPassword = $DomainAdminCredentials
+			SafemodeAdministratorPassword = $SafemodeAdministrator
 			DependsOn =  '[WindowsFeature]ADDS_Install'
         }
         

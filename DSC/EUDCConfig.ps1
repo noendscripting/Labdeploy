@@ -17,7 +17,7 @@ Configuration DcConfig
 	)
 
 	Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc
-	Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 8.4.0
+	Import-DscResource -ModuleName ComputerManagementDsc
 	
 
 

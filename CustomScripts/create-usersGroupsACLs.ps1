@@ -168,7 +168,7 @@ function set-CustomACLs
     $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence,$FileSystemRights,$InheritanceFlags,$PropagationFlags,$AccessControlType)
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl $TargetPath
-    write-log "Granted FullControl Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
+    write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
 
 }
 #region logging parameters
@@ -347,44 +347,12 @@ foreach($group in $_new_groups)
 }
 #endregion
 
+#region Import GPOs
+import-gpo -BackupGpoName "Server Admins GPO" -TargetName TestGPO -path $PSScriptRoot
 
 
 
 
 
 
-break
-<#
-#region domain controller random domain admin file rights
-Add-WindowsFeature RSAT-AD-PowerShell
 
-New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
-
-#fileshare
-$_new_groups = "Logistics", "Information Technology", "IT Support", "Strategic Information Systems", "Data Entry", "Research and Development", "Strategic Sourcing", "Purchasing", "Strategic Sourcing", "Operations", "Public Relations", "Corporate Communications", "Advertising", "Market Research", "Strategic Marketing", "Customer service", "Telesales", "Account Management", "Marketing", "Sales", "Payroll", "Recruitment", "Training", "Human Resource", "Accounting", "Financial"
-
-$_new_groups | ForEach-Object {
-    $_group = $(($_).replace(" ", ""))
-    #New-Item "C:\File_Share\$($_)\" -type directory
-    New-SMBShare –Name $_ –Path "C:\File_Share\$($_)\" –FullAccess "contoso\$_group"
-    $groups = get-adgroup -filter 'samaccountname -like "grp-share*"'
-    $_count = $(Get-Random -Minimum 0 -Maximum 6)
-    for ($i = 1; $i -le $_count; $i++) {
-        $acl = Get-Acl "C:\File_Share\$($_)"
-        $permission = "$((get-addomain).name)\$(($groups | get-random).samaccountname)", "FullControl", "Allow"
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
-        $acl.SetAccessRule($accessRule)
-        #$acl | Set-Acl "C:\File_Share\$($_)"
-        for ($i = 1; $i -le 10; $i++) {
-            #New-Item "C:\File_Share\$($_)\$($_)_word_doc_$($i).docx" -type file
-            #$acl | Set-Acl "C:\File_Share\$($_)\$($_)_word_doc_$($i).docx"
-            #New-Item "C:\File_Share\$($_)\$($_)_excel_$($i).xlsx" -type file
-            #$acl | Set-Acl "C:\File_Share\$($_)\$($_)_excel_$($i).xlsx"
-        }
-         
-    }
-}
-
-New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
-
-#>
