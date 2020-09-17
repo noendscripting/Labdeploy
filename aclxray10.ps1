@@ -56,7 +56,7 @@ Added shutdown schedule  to VMs
 #This is for internal Microsoft use only
 
 #>
-#Requires -Modules Az,PSDesiredStateConfiguration,ActiveDirectoryDsc,ComputerManagementDsc
+#Requires -Modules Az,PSDesiredStateConfiguration,ActiveDirectoryDsc,ComputerManagementDsc,StorageDsc
 
 [CmdletBinding()]
   

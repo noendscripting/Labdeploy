@@ -153,19 +153,18 @@ function Set-OuDelegatiion {
 
 }
 
-function set-CustomACLs
-{
-     param(
-         [string]$TargetPath,
-         [string]$IdenitylRefrence,
-         [string]$FileSystemRights,
-         [string]$InheritanceFlags,
-         [string]$PropagationFlags,
-         [string]$AccessControlType
-     )
+function set-CustomACLs {
+    param(
+        [string]$TargetPath,
+        [string]$IdenitylRefrence,
+        [string]$FileSystemRights,
+        [string]$InheritanceFlags,
+        [string]$PropagationFlags,
+        [string]$AccessControlType
+    )
 
     $acl = Get-Acl $TargetPath
-    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence,$FileSystemRights,$InheritanceFlags,$PropagationFlags,$AccessControlType)
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl $TargetPath
     write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
@@ -175,7 +174,7 @@ function set-CustomACLs
 $PSDefaultParameterValues = @{
 
     "write-log:severity" = "INFO";
-    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($MyInvocation.MyCommand.Name).log"
+    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($scriptRootMyCommand.Name).log"
 }
     
     
@@ -186,25 +185,27 @@ if ($log.Length -ne 0) {
     
     }
     else {
-        write-log "Custom log is not found setting log to $($env:ALLUSERSPROFILE)\$($MyInvocation.MyCommand.Name).log"
+        write-log "Custom log is not found setting log to $($env:ALLUSERSPROFILE)\$($scriptRootMyCommand.Name).log"
     }
     
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion 
 #region setting local domain variables
+$scriptRoot = split-path $scriptRootMyCommand.Source -Parent
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
-$companyName = (Import-csv "$PSScriptRoot\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
+$companyName = (Import-csv "$($scriptRootPSScriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
+$sysvolRoot = (get-smbshare -Name sysvol).Path
 
 #endregion
 #region adding OUs
-add-OrganizationalUnits -OUList "$($PSScriptRoot)\ous.txt" -TargetDomainDN $domainDN
+add-OrganizationalUnits -OUList "$($scriptRoot)\ous.txt" -TargetDomainDN $domainDN
 #endregion
 #region adding users 
 write-log "Adding user to $($domainName)"
 
-foreach ($user in (import-csv "$PSScriptRoot\$($domainName)-users.csv")) {
+foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
     $name = $user.first + " " + $user.last
 
     $newUserObject = @{
@@ -236,7 +237,7 @@ foreach ($user in (import-csv "$PSScriptRoot\$($domainName)-users.csv")) {
 #region creating deparmnet groups
 write-log "Creating deparatment group"
 #$_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
-$_new_groups = Get-Content "$($PSScriptRoot)\groups.txt" 
+$_new_groups = Get-Content "$($scriptRoot)\groups.txt" 
 $_new_groups | ForEach-Object {
     New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
     write-log "Created departmnet group $($_)"
@@ -259,9 +260,9 @@ Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
 write-log "Setting up delegations in OUs"
 
 0..2 | ForEach-Object {
-    Set-OuDelegatiion -group "tier$($PSItem)admins" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
+    Set-OuDelegatiion -group "tier$($PSItem)admins" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
 }
-Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($PSScriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
+Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 #endregion
 #region creating random gneral groups
 write-log "Creating random general groups"
@@ -331,24 +332,52 @@ get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
         
         Add-ADGroupMember -Identity $($groups | get-random) -Members $_
     }
-  Write-log "Added $($_group_count) to group $($_.Name)"
+    Write-log "Added $($_group_count) to group $($_.Name)"
 }
 #endregion 
 #region create sysvol files and folders gives random
 write-log "Creating deparment login script and assign permissions from generic groups"
 
-foreach($group in $_new_groups)
-{
-    $_folderResult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\" -type directory
+foreach ($group in $_new_groups) {
+    $_folderResult = New-Item "$($sysvolRoot)\domain\scripts\$($group)\" -type directory
     write-log "Created directory $($_folderResult.FullName)"
-    $_fileREsult = New-Item "C:\Windows\SYSVOL\domain\scripts\$($group)\logon.bat" -type file
+    $_fileREsult = New-Item "$($sysvolRoot)\domain\scripts\$($group)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
 
 #region Import GPOs
-import-gpo -BackupGpoName "Server Admins GPO" -TargetName TestGPO -path $PSScriptRoot
+<#$zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
+if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
+    throw "Failed find zip file with GPO backup"
+
+}
+write-log "Found GPO backup ZIP file at $($zipFileData.FullName)"
+$tierOneGroupData = get-adgroup 'Tier1 Server Maintenance' -Properties Name, SID
+$groupName = "$($domainName)\$($tierOneGroupData.name)"
+$groupSID = $tierOneGroupData.SID
+
+Expand-Archive -Path $zipFileData.fullname -Force
+
+$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
+if ([string]::IsNullOrEmpty($configXMPath)) {
+    throw "Failed extract zip file with GPO backup"
+
+}
+[xml]$GPOSettings = Get-Content $configXMPath
+
+$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
+write-log "Set Group Name in GPO Prefrences to $($groupName)"
+$GPOSettings.Groups.Group.Properties.Members.Member.SID = $groupSID
+write-log "Set Group SID in GPO Prefrences to $($groupSID)"
+$GPOSettings.Save($configXMPath)
+$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
+$importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)\$($zipFileData.basename)" -CreateIfNeeded -TargetName 'Server Admin GPO'
+write-log $importgpresult
+$linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN
+write-log $linkedGPOresult#>
+#endregion
 
 
 

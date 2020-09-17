@@ -79,16 +79,15 @@ trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception
 #endregion 
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
-
+$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
-$domainDN = $domainData.distinguishedname
 $domainName = $domainData.NetbiosName
 write-log "Connect to domain $($domainName)"
 #endregion
 #New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
 
 #region set up grouops, file extensions and ACL collections
-$businessGroups = Get-Content "$($PSScriptRoot)\groups.txt" 
+$businessGroups = Get-Content "$($scriptRoot)\groups.txt" 
 $genericGroups = get-adgroup -filter 'samaccountname -like "*-general-*"'
 $MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
 $OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
@@ -144,7 +143,29 @@ forEach ($buGroup in $businessGroups) {
         set-CustomACLs @customACLParams
     }
 }
-     
+#endregion
+#region Grating "" group permissions to start\stop Spooler service
+$operatorsGroupSid = (Get-ADGroup -Identity 'Service Desk Operators').sid
+
+
+$executable = "$($env:SystemRoot)\system32\sc.exe"
+$parameters = "sdset Spooler D:(A;;CCLCSWLOCRRC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;RPWPCR;;;$($operatorsGroupSid))S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)"
+
+$ps = new-object System.Diagnostics.Process
+$ps.StartInfo.Filename = $executable
+$ps.StartInfo.Arguments = $parameters
+$ps.StartInfo.RedirectStandardOutput = $True
+$ps.StartInfo.UseShellExecute = $false
+$ps.start()
+$ps.WaitForExit()
+[string]$outputData = $ps.StandardOutput.ReadToEnd();
+
+If (!($outputData -match "SUCCESS")) {
+    Throw  "Adding permissions to spooler server failed with error`n$($outputData)"
+}
+
+#endregion
+
      
 
 

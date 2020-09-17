@@ -755,7 +755,14 @@
           "osDisk": {
             "createOption": "FromImage",
             "caching": "ReadWrite"
-          }
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": 20,
+              "lun": 0,
+              "CreateOption": "Empty"
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
