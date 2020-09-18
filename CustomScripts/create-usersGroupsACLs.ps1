@@ -174,7 +174,7 @@ function set-CustomACLs {
 $PSDefaultParameterValues = @{
 
     "write-log:severity" = "INFO";
-    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($scriptRootMyCommand.Name).log"
+    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($MyInvocation.MyCommand.Name).log"
 }
     
     
@@ -192,10 +192,10 @@ if ($log.Length -ne 0) {
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion 
 #region setting local domain variables
-$scriptRoot = split-path $scriptRootMyCommand.Source -Parent
+$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
-$companyName = (Import-csv "$($scriptRootPSScriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
+$companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 $sysvolRoot = (get-smbshare -Name sysvol).Path
 
 #endregion
@@ -348,7 +348,7 @@ foreach ($group in $_new_groups) {
 #endregion
 
 #region Import GPOs
-<#$zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
+$zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
     throw "Failed find zip file with GPO backup"
 
@@ -376,7 +376,7 @@ $GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
 $importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)\$($zipFileData.basename)" -CreateIfNeeded -TargetName 'Server Admin GPO'
 write-log $importgpresult
 $linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN
-write-log $linkedGPOresult#>
+write-log $linkedGPOresult
 #endregion
 
 

@@ -298,7 +298,8 @@
       "groups.txt",
       "OUs.txt",
       "ou-rights.csv",
-      "create-fileServerACLs.ps1"
+      "create-fileServerACLs.ps1",
+      "{DB9B5AF8-6F88-4E2A-B961-9261D2B4A3DB}.zip"
     ]
 
   },
@@ -1065,7 +1066,8 @@
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
         }
