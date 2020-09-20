@@ -299,7 +299,7 @@
       "OUs.txt",
       "ou-rights.csv",
       "create-fileServerACLs.ps1",
-      "{DB9B5AF8-6F88-4E2A-B961-9261D2B4A3DB}.zip"
+      "{8FD9D5C3-89B9-48F8-B237-5DDBAF986EC5}.zip"
     ]
 
   },
@@ -594,8 +594,8 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "PublicIPCopy",
-        "Microsoft.Resources/deployments/set-VNET-DNS"
+        "PublicIPCopy"
+       
       ],
       "tags": {
         "displayName": "File Server NIC Loop"
@@ -732,7 +732,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
+        //"[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
       ],
       "tags": {
         "displayName": "FABRIKAMAD-DC"
@@ -758,11 +759,6 @@
             "caching": "ReadWrite"
           },
           "dataDisks": [
-            {
-              "diskSizeGB": 20,
-              "lun": 0,
-              "CreateOption": "Empty"
-            }
           ]
         },
         "networkProfile": {
@@ -834,7 +830,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[2])]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
+        //"[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
       ],
       "tags": {
         "displayName": "EU-DC"
@@ -929,7 +926,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "DCCustomScript",
+        //"DCCustomScript",
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),3)])]"
       ],
       "tags": {
@@ -984,7 +981,7 @@
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,concat('joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName))]"
       ],
       "tags": {
-        "displayName": "FCConfugScript"
+        "displayName": "FSConfugScript"
       },
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -1047,6 +1044,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
+        "DCCustomScript",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[copyIndex()].virtualMachineName,concat(variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig'))]"
 
       ],

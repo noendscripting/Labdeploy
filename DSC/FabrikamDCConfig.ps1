@@ -17,8 +17,7 @@ Configuration DcConfig
 	)
 
 	Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc
-	Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc
-
+	Import-DscResource -ModuleName ComputerManagementDsc
 
 	Node $nodeName
 	{             
@@ -70,28 +69,15 @@ Configuration DcConfig
 			Name   = 'RSAT-Role-Tools'
 		}
 		
-		WaitForDisk Wait_Data_Disk {
-			DiskId           = 2
-			RetryCount       = 3
-			RetryIntervalSec = 60
-			DependsOn        = '[WindowsFeature]RSAT_Role_Tools'
-		}
+		
 
-		Disk Data_Disk {
-			DiskId             = 2
-			DriveLetter        = "F"
-			AllocationUnitSize = 4096
-			DependsOn          = '[WaitforDisk]Wait_Data_Disk'
-		}
+		
 		ADDomain CreateForest { 
 			DomainName                    = $DomainName            
 			Credential                    = $DomainAdminCredentials
 			SafemodeAdministratorPassword = $DomainAdminCredentials
 			DomainNetbiosName             = $NetBiosDomainname
-			DataBasePath                  = "F:\NTDS"
-			LogPath                       = "F:\NTDS"
-			SysvolPath                    = "F:\SYSVOL"
-			DependsOn                     = '[Disk]Data_Disk', '[WindowsFeature]ADDS_Install'
+			DependsOn                     = '[WindowsFeature]ADDS_Install'
 		}
 		Script SetForwarders {
 			TestScript = 

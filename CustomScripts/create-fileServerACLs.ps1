@@ -76,7 +76,14 @@ if ($log.Length -ne 0) {
     
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
-#endregion 
+#endregion
+#region configuring enabling WinRM with certbased auth and configuring firewall
+$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
+Enable-PSRemoting -SkipNetworkProfileCheck -Force
+New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
+New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
+Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
+#endregion
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent

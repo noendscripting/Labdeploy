@@ -94,7 +94,7 @@ Function add-OrganizationalUnits {
             #Creating parent path for the next OU branch 
             $parentPath = "$($tempPath)$($TargetDomainDN)"
             #Verify that result variable is not empty and clearing contents
-            if ($result -ne $null) {
+            if ($null -ne $result) {
                 Clear-Variable result
             }
             #Substruting from OU iterator to go to next branch in the loop
@@ -190,15 +190,22 @@ if ($log.Length -ne 0) {
     
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
-#endregion 
+#endregion
+#region configuring enabling WinRM with certbased auth and configuring firewall
+$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
+Enable-PSRemoting -SkipNetworkProfileCheck -Force
+New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
+New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
+Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
+#endregion
 #region setting local domain variables
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 $sysvolRoot = (get-smbshare -Name sysvol).Path
-
 #endregion
+
 #region adding OUs
 add-OrganizationalUnits -OUList "$($scriptRoot)\ous.txt" -TargetDomainDN $domainDN
 #endregion
@@ -315,10 +322,6 @@ get-aduser -filter * -searchbase $_ou | ForEach-Object {
         write-log "Addded user $($_user.display) to group $($PSItem)"
     }
     Clear-Variable _user
-    <#for ($i = 1; $i -le $_group_count; $i++) {
-        
-       
-    }#>
 }
 #endregion
 #region populating generic groups with other generic groups
@@ -330,7 +333,7 @@ get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
     $_group_count
     for ($i = 1; $i -le $_group_count; $i++) {
         
-        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
+        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
     }
     Write-log "Added $($_group_count) to group $($_.Name)"
 }
@@ -346,7 +349,6 @@ foreach ($group in $_new_groups) {
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
-
 #region Import GPOs
 $zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
@@ -356,11 +358,11 @@ if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
 write-log "Found GPO backup ZIP file at $($zipFileData.FullName)"
 $tierOneGroupData = get-adgroup 'Tier1 Server Maintenance' -Properties Name, SID
 $groupName = "$($domainName)\$($tierOneGroupData.name)"
-$groupSID = $tierOneGroupData.SID
+$groupSID = $tierOneGroupData.SID.ToString()
 
-Expand-Archive -Path $zipFileData.fullname -Force
+Expand-Archive -Path $zipFileData.fullname -Force -DestinationPath $scriptRoot
 
-$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
+$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
 if ([string]::IsNullOrEmpty($configXMPath)) {
     throw "Failed extract zip file with GPO backup"
 
@@ -373,7 +375,7 @@ $GPOSettings.Groups.Group.Properties.Members.Member.SID = $groupSID
 write-log "Set Group SID in GPO Prefrences to $($groupSID)"
 $GPOSettings.Save($configXMPath)
 $GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
-$importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)\$($zipFileData.basename)" -CreateIfNeeded -TargetName 'Server Admin GPO'
+$importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)" -CreateIfNeeded -TargetName 'Server Admin GPO'
 write-log $importgpresult
 $linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN
 write-log $linkedGPOresult
