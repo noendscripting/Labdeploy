@@ -7,7 +7,7 @@ function write-log {
     param(
         [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         $message,
-        [ValidateSet("ERROR", "INFO", "WARN")]
+        [ValidateSet("ERROR", "INFO", "WARN","SUCCESS")]
         $severity,
         $logfile
 
@@ -15,18 +15,19 @@ function write-log {
 
     $WhatIfPreference = $false
     $timeStamp = get-date -UFormat %Y%m%d-%I:%M:%S%p
+    $timeStamp = get-date -UFormat %Y%m%d-%I:%M:%S%p
     switch ($severity) {
 
-        "INFO" { $messageColor = "Green" }
-        "ERROR" { $messageColor = "Red" }
-        "WARN" { $messageColor = "Yellow" }
+        "INFO" { [ConsoleColor]$messageColor = "Cyan" }
+        "ERROR" { [ConsoleColor]$messageColor = "Red" }
+        "WARN" { [ConsoleColor]$messageColor = "Yellow" }
+        "SUCCESS" { [ConsoleColor]$messageColor = "Yellow" }
     
     }
     Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
-    if ($logfile.length -ge 0) {
+    if (!([string]::IsNullOrEmpty($logfile))) {
         write-output "$($timeStamp) $($severity) $($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
-
 
 
 }
@@ -42,7 +43,7 @@ Function add-OrganizationalUnits {
     #Getting list of OUs filtreing for uniqueness and removing Source Domain Distinguished Name
     write-log "Getting list of domains from file $($OUList)"
     $ImportedOUs = (Get-Content $OUList)
-    write-log "Total $($ImportedOus.Count) unique OUs found"
+    write-log "Total $($ImportedOus.Count) unique OUs found" -severity SUCCESS
     [int]$TotalAddedOUs = 0 
     # Going over a list 
     ForEach ($importedOU in $ImportedOUs) {
@@ -74,7 +75,7 @@ Function add-OrganizationalUnits {
                         $TotalAddedOUs += 1
                     }
                     else {
-                        write-log -message "Container $($arrayOU[$ouLength]) needs to be created by same process as original. " -severity WARN
+                        write-log -message "Container $($arrayOU[$ouLength]) needs to be created by a separate process. " -severity WARN
                     }
                 }
                 else {   
@@ -83,7 +84,7 @@ Function add-OrganizationalUnits {
                     $OuName = $arrayOU[$ouLength].Substring(3, ($arrayOU[$ouLength].Length - 3))
                     #Creating new OU and saving result
                     $result = New-ADOrganizationalUnit -Name $OuName -Path $parentPath -ProtectedFromAccidentalDeletion $false  -PassThru
-                    write-log "Added $($result.DistinguishedName)"
+                    write-log "Added $($result.DistinguishedName)" -severity SUCCESS
                     $TotalAddedOUs += 1
                 }
             }
@@ -101,7 +102,7 @@ Function add-OrganizationalUnits {
             $ouLength -= 1
         } while ($ouLength -ge 0) # terminate after OU iterator is less than 0
     }
-    write-log "Total Added $($TotalAddedOUs)"
+    write-log "Total Added $($TotalAddedOUs)" -severity SUCCESS
 }
 Function add-PrivelegedUsers {
     param (
@@ -113,7 +114,7 @@ Function add-PrivelegedUsers {
         Get-ADUser -Identity $PSItem.DistinguishedName | ForEach-Object {
             $samAccountName = "$($prefix)$($_.samaccountname)"
             New-ADUser -Name $PSItem.name -displayname $PSItem.name -userprincipalname "$($samAccountName)@$($upnSuffix)" -City $PSItem.city -Company "Contoso" -Country US -EmailAddress $PSItem.EmailAddress -GivenName $PSItem.GivenName -MobilePhone $PSItem.mobile -OfficePhone $PSItem.OfficePhone -PostalCode $PSItem.PostalCode -description "Server Admin Account" -SamAccountName  $samAccountName -State $_.state -StreetAddress $_.StreetAddress -Surname $_.Surname -path $ou -AccountPassword (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force) -Enabled $true
-            write-log "Added priveleged Tier $($Tier) account $($PSItem.name)"
+            write-log "Added priveleged Tier $($Tier) account $($PSItem.name)" -severity SUCCESS
         }
     }
 
@@ -128,7 +129,7 @@ Function Add-UsersToPrivelgedGroups {
     forEach ($group in $groups) {
         get-aduser -filter * -searchbase $ou | Get-Random -Count 3 | ForEach-Object {
             get-adgroup $group | Add-ADGroupMember -members $PSItem
-            write-log "Added $($PSItem.name) to $($group)"
+            write-log "Added $($PSItem.name) to $($group)" -severity SUCCESS
         }
     }
 }
@@ -146,7 +147,7 @@ function Set-OuDelegatiion {
         $ACL = Get-Acl -path "AD:\$($targetOU)"      
         $ACL.AddAccessRule($rightsObject)
         Set-Acl -Path "AD:\$($targetOU)" -AclObject $ACL
-        write-log "Added group $($importedPermission.IdentityReference) permissions $($importedPermission.ActiveDirectoryRights) to $($targetOU)"
+        write-log "Added group $($importedPermission.IdentityReference) permissions $($importedPermission.ActiveDirectoryRights) to $($targetOU)" -severity SUCCESS
         Clear-Variable rightsObject, ACL
     
     }
@@ -167,14 +168,14 @@ function set-CustomACLs {
     $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl $TargetPath
-    write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
+    write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)" -severity SUCCESS
 
 }
 #region logging parameters
 $PSDefaultParameterValues = @{
 
     "write-log:severity" = "INFO";
-    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($MyInvocation.MyCommand.Name).log"
+    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$(($MyInvocation.MyCommand.Name).Split(".")[0]).log"
 }
     
     
@@ -185,7 +186,7 @@ if ($log.Length -ne 0) {
     
     }
     else {
-        write-log "Custom log is not found setting log to $($env:ALLUSERSPROFILE)\$($scriptRootMyCommand.Name).log"
+        write-log "Custom log is not found setting log to $($env:ALLUSERSPROFILE)\$(($MyInvocation.MyCommand.Name).Split(".")[0]).log"
     }
     
 }
@@ -271,11 +272,20 @@ write-log "Setting up delegations in OUs"
 }
 Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 #endregion
-#region creating random gneral groups
+
+#region creating random local groups
+write-log "Creating random general groups"
+1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
+    $groupName = "grp-$($companyName)-local-$($psitem)"
+    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope DomainLocal -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
+    write-log "Created general group $($groupName)"
+}
+#endregion
+#region creating random general groups
 write-log "Creating random general groups"
 1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
     $groupName = "grp-$($companyName)-general-$($psitem)"
-    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope Global -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
+    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope Universal -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
     write-log "Created general group $($groupName)"
 }
 #endregion
@@ -328,6 +338,20 @@ get-aduser -filter * -searchbase $_ou | ForEach-Object {
 write-log "Nesting random generic groups inside each outher"
 $groups = get-adgroup -filter 'samaccountname -like "grp-*"'
 get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
+    $_.DistinguishedName
+    $_group_count = Get-Random -Minimum 1 -Maximum 10
+    $_group_count
+    for ($i = 1; $i -le $_group_count; $i++) {
+        
+        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
+    }
+    Write-log "Added $($_group_count) to group $($_.Name)"
+}
+#endregion
+#region populating domain local groups with  generic groups
+write-log "Nesting random generic groups inside  local groups"
+$groups = get-adgroup -filter 'samaccountname -like "*general*"'
+get-adgroup -filter 'samaccountname -like "*local*"' | ForEach-Object {
     $_.DistinguishedName
     $_group_count = Get-Random -Minimum 1 -Maximum 10
     $_group_count

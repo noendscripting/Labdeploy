@@ -594,7 +594,9 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "PublicIPCopy"
+        "PublicIPCopy",
+        "ForestBuild",
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[2])]"
        
       ],
       "tags": {
@@ -734,6 +736,7 @@
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
         //"[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
         "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
+        
       ],
       "tags": {
         "displayName": "FABRIKAMAD-DC"
@@ -742,7 +745,10 @@
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[1].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('shutdownTimeZone')]"
+          }
         },
         "hardwareProfile": {
           "vmSize": "[variables('VMBuildParams').params[1].vmSize]"
@@ -936,7 +942,10 @@
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "timeZone": "[parameters('shutdownTimeZone')]"
+          }
         },
         "hardwareProfile": {
           "vmSize": "[variables('VMBuildParams').params[add(copyIndex(),3)].vmSize]"
@@ -978,6 +987,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
+        "DCCustomScript",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,concat('joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName))]"
       ],
       "tags": {
@@ -1044,7 +1054,6 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "DCCustomScript",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[copyIndex()].virtualMachineName,concat(variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DCConfig'))]"
 
       ],
@@ -1082,7 +1091,7 @@
       "name": "[concat('shutdown-computevm-',variables('VMBuildParams').params[copyIndex()].virtualMachineName)]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "MemberServer"
+        "joindomain"
       ],
       "tags": {
         "displayName": "VMShutdown-Schedule"

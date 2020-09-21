@@ -5,7 +5,7 @@ function write-log {
     param(
         [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         $message,
-        [ValidateSet("ERROR", "INFO", "WARN")]
+        [ValidateSet("ERROR", "INFO", "WARN","SUCCESS")]
         $severity,
         $logfile
 
@@ -15,13 +15,14 @@ function write-log {
     $timeStamp = get-date -UFormat %Y%m%d-%I:%M:%S%p
     switch ($severity) {
 
-        "INFO" { $messageColor = "Green" }
-        "ERROR" { $messageColor = "Red" }
-        "WARN" { $messageColor = "Yellow" }
+        "INFO" { [ConsoleColor]$messageColor = "Cyan" }
+        "ERROR" { [ConsoleColor]$messageColor = "Red" }
+        "WARN" { [ConsoleColor]$messageColor = "Yellow" }
+        "SUCCESS" { [ConsoleColor]$messageColor = "Yellow" }
     
     }
     Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
-    if ($logfile.length -ge 0) {
+    if (!([string]::IsNullOrEmpty($logfile))) {
         write-output "$($timeStamp) $($severity) $($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
 }
@@ -60,7 +61,7 @@ function set-CustomACLs {
 $PSDefaultParameterValues = @{
 
     "write-log:severity" = "INFO";
-    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$($MyInvocation.MyCommand.Name).log"
+    "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$(($MyInvocation.MyCommand.Name).Split(".")[0]).log"
 }
     
     
@@ -95,7 +96,7 @@ write-log "Connect to domain $($domainName)"
 
 #region set up grouops, file extensions and ACL collections
 $businessGroups = Get-Content "$($scriptRoot)\groups.txt" 
-$genericGroups = get-adgroup -filter 'samaccountname -like "*-general-*"'
+$domainLocalGroups = get-adgroup -filter 'samaccountname -like "*-local-*"'
 $MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
 $OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
 $AllExtensions = $MultimediaExtensions + $OfficeExtensions
@@ -112,7 +113,7 @@ forEach ($buGroup in $businessGroups) {
     New-SMBShare -Name $buGroup -Path $targetPath -FullAccess "$($domainName)\$($bugroup)"
     write-log "Created share $($buGroup) using path $($targetPath)"
     #selecting ramdom genral groiup and assigning to the newly created folder with random permissions 
-    $genericGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
+    $domainLocalGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
         $customACLParams = @{
             "TargetPath"        = $targetPath
             "IdenitylRefrence"  = "$($domainName)\$($psitem.samaccountname)"
@@ -141,7 +142,7 @@ forEach ($buGroup in $businessGroups) {
 
         $customACLParams = @{
             "TargetPath"        = $psitem.FullName
-            "IdenitylRefrence"  = "$($domainName)\$($genericGroups.samaccountname | get-random)"
+            "IdenitylRefrence"  = "$($domainName)\$($domainLocalGroups.samaccountname | get-random)"
             "FileSystemRights"  = ($fileSystemRightsArray | Get-Random)
             "AccessControlType" = ($AccessControlTypeArray | Get-random)
             "File"              = $true

@@ -115,6 +115,13 @@ switch ($result)
 
 
 #Create Resource Group, Storage Account and Container
+if ($VerbosePreference -eq 'Continue')
+{
+  $InformationPreference = 'SilentlyContinue'
+}
+else {
+  $InformationPreference = 'Continue'
+}
 
 Get-AzResourceGroup -Name $RG -ErrorAction SilentlyContinue -ErrorVariable errorData | Out-Null
 if ([string]::IsNullOrEmpty($errorData) -and $VerbosePreference -eq "Continue")
@@ -132,6 +139,7 @@ else {
   New-AzStorageContainer -Name $containerName -Context $storageAccount.context  | Out-Null
 
 }
+
 
 
 

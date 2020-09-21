@@ -114,7 +114,7 @@ Configuration DcConfig
 		WaitForADDomain DscForestWait {
 			DomainName              = $ForwarderDomain
 			DependsOn               = '[Script]SetForwarders'
-			WaitTimeout             = 900
+			WaitTimeout             = 3600
 			WaitForValidCredentials = $true
 			Credential              = $DomainAdminCredentials
 			RestartCount            = 5 
