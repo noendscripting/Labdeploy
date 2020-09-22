@@ -7,7 +7,7 @@ function write-log {
     param(
         [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         $message,
-        [ValidateSet("ERROR", "INFO", "WARN","SUCCESS")]
+        [ValidateSet("ERROR", "INFO", "WARN", "SUCCESS")]
         $severity,
         $logfile
 
@@ -21,7 +21,7 @@ function write-log {
         "INFO" { [ConsoleColor]$messageColor = "Cyan" }
         "ERROR" { [ConsoleColor]$messageColor = "Red" }
         "WARN" { [ConsoleColor]$messageColor = "Yellow" }
-        "SUCCESS" { [ConsoleColor]$messageColor = "Yellow" }
+        "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
     Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
@@ -153,7 +153,6 @@ function Set-OuDelegatiion {
     }
 
 }
-
 function set-CustomACLs {
     param(
         [string]$TargetPath,
@@ -171,14 +170,27 @@ function set-CustomACLs {
     write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)" -severity SUCCESS
 
 }
+function add-GroupMemberships {
+    param (
+        $groups,
+        $members,
+        $radomFactor
+    )
+    $members | ForEach-Object {
+        for ($i = 1; $i -le $radomFactor; $i++) {
+            $addResult = Add-ADGroupMember -Identity $($Groups | get-random) -Members $PSItem -PassThru
+            write-log "Added $($PSItem.Name) to group $($addResult.Name)" -severity SUCCESS
+        }
+    }
+
+
+}
 #region logging parameters
 $PSDefaultParameterValues = @{
 
     "write-log:severity" = "INFO";
     "write-log:logfile"  = "$($env:ALLUSERSPROFILE)\$(($MyInvocation.MyCommand.Name).Split(".")[0]).log"
-}
-    
-    
+}      
 if ($log.Length -ne 0) {
     if (Test-Path (split-path $log -parent)) {
         $PSDefaultParameterValues["write-log:logfile"] = $log
@@ -193,11 +205,11 @@ if ($log.Length -ne 0) {
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion
 #region configuring enabling WinRM with certbased auth and configuring firewall
-$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
+<#$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
 New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
 New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
-Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
+Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True #>
 #endregion
 #region setting local domain variables
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
@@ -206,11 +218,11 @@ $domainName = (Get-ADDomain).NetbiosName
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 $sysvolRoot = (get-smbshare -Name sysvol).Path
 #endregion
-
-#region adding OUs
+<#region adding OUs
 add-OrganizationalUnits -OUList "$($scriptRoot)\ous.txt" -TargetDomainDN $domainDN
 #endregion
-#region adding users 
+#region adding users
+$usersOU = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 write-log "Adding user to $($domainName)"
 
 foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
@@ -221,7 +233,7 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
         Name              = $name
         City              = $user.city
         Company           = $companyName
-        Country           = 'US'
+        Country           = $user.Country
         EmailAddress      = $user.email
         GivenName         = $user.first
         MobilePhone       = $user.phone
@@ -232,23 +244,24 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
         StreetAddress     = $user.Street
         Surname           = $user.last
         UserPrincipalName = $user.email
-        path              = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
+        path              = $usersOU
         AccountPassword   = (ConvertTo-SecureString -AsPlainText "!Th1sn33dsto b3ash@rdas1tc@n" -Force)
         Enabled           = $true
         
     }
     New-ADUser @newUserObject
-    write-log "Added user $($name)" 
+    write-log "Added user $($name)" -severity SUCCESS
     Clear-Variable name
 }
 #endregion
 #region creating deparmnet groups
-write-log "Creating deparatment group"
+write-log "Creating deparatment groups"
 #$_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
+$groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
 $_new_groups = Get-Content "$($scriptRoot)\groups.txt" 
 $_new_groups | ForEach-Object {
-    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
-    write-log "Created departmnet group $($_)"
+    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path $groupsOU
+    write-log "Created departmnet group $($_)" -severity SUCCESS
 }
 #endregion
 #region creating priveleged groups
@@ -264,7 +277,7 @@ write-log "Adding AD Infrastructure Engineers to Domain Admins"
 $privlegedADGroup = Get-ADGroup "AD Infrastructure Engineers"
 Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
 #endregion
-#region Adding OU delegattions
+#region Adding OU delegations
 write-log "Setting up delegations in OUs"
 
 0..2 | ForEach-Object {
@@ -272,29 +285,28 @@ write-log "Setting up delegations in OUs"
 }
 Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 #endregion
-
 #region creating random local groups
-write-log "Creating random general groups"
+write-log "Creating random local groups"
 1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
-    $groupName = "grp-$($companyName)-local-$($psitem)"
-    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope DomainLocal -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
-    write-log "Created general group $($groupName)"
+    $groupNameLocal = "grp-$($companyName)-local-$($psitem)"
+    New-ADGroup $groupNameLocal -SamAccountName $groupNameLocal -DisplayName $groupNameLocal -GroupScope DomainLocal -GroupCategory Security -Path $groupsOU
+    write-log "Created local group $($groupNameLocal)" -severity SUCCESS
 }
 #endregion
-#region creating random general groups
-write-log "Creating random general groups"
+#region creating random universal groups
+write-log "Creating random universal groups"
 1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
-    $groupName = "grp-$($companyName)-general-$($psitem)"
-    New-ADGroup $groupName -SamAccountName $groupName -DisplayName $groupName -GroupScope Universal -GroupCategory Security -Path "OU=Security Groups,OU=Groups,$($domainDN)"
-    write-log "Created general group $($groupName)"
+    $groupNameUniversal = "grp-$($companyName)-universal-$($psitem)"
+    New-ADGroup $groupNameUniversal -SamAccountName $groupNameUniversal -DisplayName $groupNameUniversal -GroupScope Universal -GroupCategory Security -Path $groupsOU
+    write-log "Created general group $($groupName)" -severity SUCCESS
 }
 #endregion
 #region populatuing departmnent groups with users and adding departmnet value to the user properties
-get-aduser -filter * -SearchBase "OU=Enabled Users,OU=User Accounts, $($domainDN)" | ForEach-Object {
+get-aduser -filter * -SearchBase $usersOU | ForEach-Object {
     $_department = $_new_groups | get-random
     $_ | Set-ADUser  -department $_department
     Get-ADgroup $_department | Add-ADGroupMember -members $_
-    write-log "Added user $($_) to Depratmnet group $($_department)"
+    write-log "Added user $($_) to Depratmnet group $($_department)" -severity SUCCESS
 }
 #endregion
 #region create manager\report entries for each department
@@ -303,7 +315,7 @@ $_new_groups | ForEach-Object { $gname = $_
     $Manager = get-adgroupmember $gname  | get-random | get-aduser 
     $Manager | Set-ADUser  -Title "Manager"
     get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
-    write-log "Added $($manager.Name) as Manager to members of group $($gname)"
+    write-log "Added $($manager.Name) as Manager to members of group $($gname)" -severity SUCCESS
 }
 #endregion
 #region create privleged users
@@ -320,9 +332,9 @@ add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou
 add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)"
 #endregion
 #region populating generic groups with users
-write-log "Adding random users to generic groups"
-$_ou = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
-$_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
+write-log "Adding random users to Universal and Local groups"
+
+<#$_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
 get-aduser -filter * -searchbase $_ou | ForEach-Object {
     $_group_count = Get-Random -Minimum 1 -Maximum 10
     $_user = $PSItem
@@ -333,46 +345,66 @@ get-aduser -filter * -searchbase $_ou | ForEach-Object {
     }
     Clear-Variable _user
 }
+$allGenericGroups = (get-adgroup -filter 'samaccountname -like "grp-*"')
+$allUsers = get-aduser -filter * -searchbase $usersOU 
+$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
+add-GroupMemberships -groups $allGenericGroups -members $allUsers -radomFactor $_groupRandomcount
+Clear-Variable _groupRandomcount
 #endregion
-#region populating generic groups with other generic groups
-write-log "Nesting random generic groups inside each outher"
-$groups = get-adgroup -filter 'samaccountname -like "grp-*"'
-get-adgroup -filter 'samaccountname -like "grp-*"' | ForEach-Object {
-    $_.DistinguishedName
+#region populating Universal groups with other Universal groups
+write-log "Nesting random generic groups inside each other"
+$universallGroups = get-adgroup -filter 'samaccountname -like "*Universal*"'
+$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
+add-GroupMemberships -groups $universallGroups -members $universallGroups -radomFactor $_groupRandomcount
+Clear-Variable _groupRandomcount
+<#get-adgroup -filter 'samaccountname -like "*general*"' | ForEach-Object {
+   
     $_group_count = Get-Random -Minimum 1 -Maximum 10
     $_group_count
     for ($i = 1; $i -le $_group_count; $i++) {
         
-        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
+        Add-ADGroupMember -Identity $($generalGroups | get-random) -Members $_
     }
     Write-log "Added $($_group_count) to group $($_.Name)"
 }
 #endregion
 #region populating domain local groups with  generic groups
 write-log "Nesting random generic groups inside  local groups"
-$groups = get-adgroup -filter 'samaccountname -like "*general*"'
-get-adgroup -filter 'samaccountname -like "*local*"' | ForEach-Object {
+$localGroups = get-adgroup -filter 'samaccountname -like "*local*"'
+$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
+add-GroupMemberships -groups $localGroups -members $universallGroups -randomFactor $_groupRandomcount
+Clear-Variable _groupRandomcount
+<#get-adgroup -filter 'samaccountname -like "*general*"' | ForEach-Object {
     $_.DistinguishedName
     $_group_count = Get-Random -Minimum 1 -Maximum 10
     $_group_count
     for ($i = 1; $i -le $_group_count; $i++) {
         
-        Add-ADGroupMember -Identity $($groups | get-random) -Members $_
+        Add-ADGroupMember -Identity $($localGroups | get-random) -Members $_
     }
-    Write-log "Added $($_group_count) to group $($_.Name)"
+    Write-log "Added $($_.Name) to local domain group"
 }
-#endregion 
+#endregion
+#region Add external Universal Groups to domain local groups
+$trustTargetList = (Get-ADTrust -Filter * -Properties Target).Target
+forEach ($trustTarget in $trustTargetList) {
+
+    $foreignGroups = Get-ADGroup -Filter 'name -like "*general*"' -Server $trustTarget | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
+    $_groupRandomcount = Get-Random -Minimum 2 -Maximum 10
+    add-GroupMemberships -radomFactor $_groupRandomcount -members $foreignGroups -groups $localGroups
+}
+#endregion
 #region create sysvol files and folders gives random
 write-log "Creating deparment login script and assign permissions from generic groups"
 
 foreach ($group in $_new_groups) {
-    $_folderResult = New-Item "$($sysvolRoot)\domain\scripts\$($group)\" -type directory
+    $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\" -type directory
     write-log "Created directory $($_folderResult.FullName)"
-    $_fileREsult = New-Item "$($sysvolRoot)\domain\scripts\$($group)\logon.bat" -type file
+    $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
-#endregion
+#endregion#>
 #region Import GPOs
 $zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
@@ -380,29 +412,28 @@ if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
 
 }
 write-log "Found GPO backup ZIP file at $($zipFileData.FullName)"
-$tierOneGroupData = get-adgroup 'Tier1 Server Maintenance' -Properties Name, SID
-$groupName = "$($domainName)\$($tierOneGroupData.name)"
-$groupSID = $tierOneGroupData.SID.ToString()
+#$tierOneGroupData = get-adgroup 'Tier1 Server Maintenance' -Properties Name, SID
+#$groupName = "$($domainName)\$($tierOneGroupData.name)"
+#$groupSID = $tierOneGroupData.SID.ToString()
 
 Expand-Archive -Path $zipFileData.fullname -Force -DestinationPath $scriptRoot
 
-$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
-if ([string]::IsNullOrEmpty($configXMPath)) {
-    throw "Failed extract zip file with GPO backup"
+#$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
+#if ([string]::IsNullOrEmpty($configXMPath)) {
+#    throw "Failed extract zip file with GPO backup"
 
-}
-[xml]$GPOSettings = Get-Content $configXMPath
+#}
+#[xml]$GPOSettings = Get-Content $configXMPath
 
-$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
-write-log "Set Group Name in GPO Prefrences to $($groupName)"
-$GPOSettings.Groups.Group.Properties.Members.Member.SID = $groupSID
-write-log "Set Group SID in GPO Prefrences to $($groupSID)"
-$GPOSettings.Save($configXMPath)
-$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
+#$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
+#write-log "Set Group Name in GPO Prefrences to $($groupName)"
+#$GPOSettings.Groups.Group.Properties.Members.Member.SID = $groupSID
+#write-log "Set Group SID in GPO Prefrences to $($groupSID)"
+#$GPOSettings.Save($configXMPath)
 $importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)" -CreateIfNeeded -TargetName 'Server Admin GPO'
-write-log $importgpresult
-$linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN
-write-log $linkedGPOresult
+write-log "GPO $($importgpresult.DisplayName) added with id $($importgpresult.is)" -severity SUCCESS
+$linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN 
+write-log "GPO $($linkedGPOresult.DisplayName) linked to $($linkedGPOresult.Target)" -severity SUCCESS
 #endregion
 
 
