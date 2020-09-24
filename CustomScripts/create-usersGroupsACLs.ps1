@@ -1,6 +1,11 @@
 ﻿[CmdletBinding()]
 
-param()
+param(
+    [Parameter(Position = 0)]
+    [string]$remoteUser,
+    [Parameter(Position = 1)]
+    [string]$remotePassword
+)
 function write-log { 
 
 
@@ -216,9 +221,8 @@ $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainDN = (get-addomain).distinguishedname
 $domainName = (Get-ADDomain).NetbiosName
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
-$sysvolRoot = (get-smbshare -Name sysvol).Path
 #endregion
-<#region adding OUs
+#region adding OUs
 add-OrganizationalUnits -OUList "$($scriptRoot)\ous.txt" -TargetDomainDN $domainDN
 #endregion
 #region adding users
@@ -256,7 +260,6 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
 #endregion
 #region creating deparmnet groups
 write-log "Creating deparatment groups"
-#$_ou = "OU=Security Groups,OU=Groups,$($domainDN)"
 $groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
 $_new_groups = Get-Content "$($scriptRoot)\groups.txt" 
 $_new_groups | ForEach-Object {
@@ -333,9 +336,8 @@ add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou "
 #endregion
 #region populating generic groups with users
 write-log "Adding random users to Universal and Local groups"
-
-<#$_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
-get-aduser -filter * -searchbase $_ou | ForEach-Object {
+$_groups = (get-adgroup -filter 'samaccountname -like "grp-*"').distinguishedname
+get-aduser -filter * -searchbase $usersOU | ForEach-Object {
     $_group_count = Get-Random -Minimum 1 -Maximum 10
     $_user = $PSItem
     $_groups | Get-Random -Count $_group_count | ForEach-Object {
@@ -357,16 +359,6 @@ $universallGroups = get-adgroup -filter 'samaccountname -like "*Universal*"'
 $_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
 add-GroupMemberships -groups $universallGroups -members $universallGroups -radomFactor $_groupRandomcount
 Clear-Variable _groupRandomcount
-<#get-adgroup -filter 'samaccountname -like "*general*"' | ForEach-Object {
-   
-    $_group_count = Get-Random -Minimum 1 -Maximum 10
-    $_group_count
-    for ($i = 1; $i -le $_group_count; $i++) {
-        
-        Add-ADGroupMember -Identity $($generalGroups | get-random) -Members $_
-    }
-    Write-log "Added $($_group_count) to group $($_.Name)"
-}
 #endregion
 #region populating domain local groups with  generic groups
 write-log "Nesting random generic groups inside  local groups"
@@ -374,22 +366,22 @@ $localGroups = get-adgroup -filter 'samaccountname -like "*local*"'
 $_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
 add-GroupMemberships -groups $localGroups -members $universallGroups -randomFactor $_groupRandomcount
 Clear-Variable _groupRandomcount
-<#get-adgroup -filter 'samaccountname -like "*general*"' | ForEach-Object {
-    $_.DistinguishedName
-    $_group_count = Get-Random -Minimum 1 -Maximum 10
-    $_group_count
-    for ($i = 1; $i -le $_group_count; $i++) {
-        
-        Add-ADGroupMember -Identity $($localGroups | get-random) -Members $_
-    }
-    Write-log "Added $($_.Name) to local domain group"
-}
 #endregion
 #region Add external Universal Groups to domain local groups
 $trustTargetList = (Get-ADTrust -Filter * -Properties Target).Target
 forEach ($trustTarget in $trustTargetList) {
-
-    $foreignGroups = Get-ADGroup -Filter 'name -like "*general*"' -Server $trustTarget | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
+    $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
+    write-log "Getting list of groups from $($trustTarget) domain" 
+    $i = 0
+    Do {
+        $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
+        start-sleep -Seconds 60
+    } until ($foreignGroups.count -gt 0 -or $i -eq 10)
+    if ($foreignGroups.count -eq 0) {
+        throw "Unable to get a list of groups from $($trustTarget) domain"
+        exit
+    }
+    write-log "Obtained $($foreignGroups.count) from $($trustTarget)"
     $_groupRandomcount = Get-Random -Minimum 2 -Maximum 10
     add-GroupMemberships -radomFactor $_groupRandomcount -members $foreignGroups -groups $localGroups
 }
@@ -404,7 +396,7 @@ foreach ($group in $_new_groups) {
     write-log "Created file $($_fileREsult.FullName)"   
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
-#endregion#>
+#endregion
 #region Import GPOs
 $zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {

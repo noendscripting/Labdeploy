@@ -1075,8 +1075,11 @@
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]"
-          ],
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+          ]//,
+          //"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
         }
       },
       "copy": {
