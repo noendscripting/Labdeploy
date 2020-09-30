@@ -229,7 +229,12 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "sku": "2019-Datacenter",
           "domainName": "fabrikamad.com",
-          "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]"
+          "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]",
+           "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
+          "CustoimScriptURis": [
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
+          ]
         },
         {
           "virtualMachineName": "eufs1",
@@ -237,7 +242,12 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "sku": "2016-Datacenter",
           "domainName": "eu.contosoad.com",
-          "user": "[concat('eu\\',parameters('AdminUserName'))]"
+          "user": "[concat('eu\\',parameters('AdminUserName'))]",
+           "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
+          "CustoimScriptURis": [
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
+          ]
         }
 
       ]
@@ -299,7 +309,9 @@
       "OUs.txt",
       "ou-rights.csv",
       "create-fileServerACLs.ps1",
-      "{8FD9D5C3-89B9-48F8-B237-5DDBAF986EC5}.zip"
+      "{8FD9D5C3-89B9-48F8-B237-5DDBAF986EC5}.zip",
+      "schemaData.zip",
+      "DSInternals_v4.4.1.zip"
     ]
 
   },
@@ -977,7 +989,7 @@
       ],
       "copy": {
         "name": "MemberServer",
-        "count": 3
+        "count": 0
       }
     },
     // File server custom script loop
@@ -1006,7 +1018,7 @@
         }
       },
       "copy": {
-        "count": 1,
+        "count": 3,
         "name": "FSCustomScript"
       }
     },
@@ -1074,7 +1086,9 @@
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[4], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[8], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[9], parameters('_artifactsLocationSasToken'))]"
           ]//,
           //"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
         },

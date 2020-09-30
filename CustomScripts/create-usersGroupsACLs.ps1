@@ -1,9 +1,9 @@
 ﻿[CmdletBinding()]
 
 param(
-    [Parameter(Position = 0)]
+    [Parameter(Position = 0,Mandatory=$true)]
     [string]$remoteUser,
-    [Parameter(Position = 1)]
+    [Parameter(Position = 1,Mandatory=$true)]
     [string]$remotePassword
 )
 function write-log { 
@@ -218,8 +218,12 @@ Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True #
 #endregion
 #region setting local domain variables
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
-$domainDN = (get-addomain).distinguishedname
-$domainName = (Get-ADDomain).NetbiosName
+$domainData = Get-ADDomain
+$domainDN = $domainData.distinguishedname
+$domainName = $domainData.NetbiosName
+$domainFQDN = $domainData.DNSRoot
+
+
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 #endregion
 #region adding OUs
@@ -398,7 +402,7 @@ foreach ($group in $_new_groups) {
 }
 #endregion
 #region Import GPOs
-$zipFileData = Get-ChildItem "$($scriptRoot)\*.zip" | Select-Object FullName, BaseName
+$zipFileData = Get-ChildItem "$($scriptRoot)\{*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
     throw "Failed find zip file with GPO backup"
 
@@ -427,10 +431,70 @@ write-log "GPO $($importgpresult.DisplayName) added with id $($importgpresult.is
 $linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN 
 write-log "GPO $($linkedGPOresult.DisplayName) linked to $($linkedGPOresult.Target)" -severity SUCCESS
 #endregion
+<##region add exchange schema
+if ($domainFQDN -ne "fabrikamad.com") {
+    write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
+    exit
+}
+write-log "Updating schema on forest $($domainFQDN)"
+$forestData = Get-ADForest
+$schemaMaster = $forestData.SchemaMaster
+$configuraitionContainer = "CN=Schema,CN=Configuration,$($domainDN)"
+
+write-log "Extracting schema files"
+Expand-Archive -Path "$($scriptRoot)\schemaData.zip" -Force -DestinationPath $scriptRoot
+If (Test-Path "$($scriptRoot)\schemaData") {
+    write-log "Extrated scemafiles successfully. Startin schema update" -severity SUCCESS
+    Get-ChildItem "$($scriptRoot)\schemaData" | ForEach-Object {
+        write-log "Running schema file $($PsItem.Name)"
+        $command = "C:\windows\system32\ldifde.exe -i -s ""$($schemaMaster)"" -f ""$($PSItem.FullName)"" -j ""$($env:temp)"" -c ""<SchemaContainerDN>"" ""$($configuraitionContainer)""" 
+        $executionResult = invoke-expression $command
+        if ($executionResult -match "modified successfully") {
+            write-log $executionResult -severity SUCCESS
+        }
+        else {
+            write-log $executionResult -severity ERROR
+        }
 
 
 
+    }
+}
+#endregion#>
+#region SID history
+if ($domainFQDN -ne "eu.contosoad.com") {
+    write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
+    exit
+}
+write-log "Installing DSInternals module"
+#Expand-Archive -Path "$($scriptRoot)\DSInternals_v4.4.1.zip" -Force -DestinationPath "C:\Program Files\WindowsPowerShell\Modules"
+write-log "DS Internals Module Installed successfully" -severity SUCCESS
+
+foreach ($trustTarget in $trustTargetList) {
+
+    $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
+    $sidHistoryDB=@()
+    get-aduser -Filter 'FirstName -eq "Amari" -or FirstName -eq "Jaden" -or FirstName -eq "Jaylin" -or FirstName -eq "Jadyn"' -Properties SID, Fisrtname -Server $trustTarget -Credential $remoteCredentials | ForEach-Object {
+          $givenName = $psItem.GivenName
+$currentSId = (get-aduser -Filter * -Properties SID | where {$_.GivenName -eq $givenName}).sid
+$item = New-Object psobject -Property @{
+oldSid = $PsItem.Sid
+newSid = $currentSId
+}
+$sidHistoryDB += $item
+    }
+    Stop-Service -Name ntds -Force
+
+foreach ($sidHistory in $sidHistoryDB)
+{
+    Add-ADDBSidHistory -SidHistory $sidHistory.oldSid  -ObjectSid $sidHistory.newSid  -DatabasePath C:\Windows\NTDS\ntds.dit
+    
+}
+Start-Service -Name ntds
+  
+
+}
 
 
-
+#endregion
 

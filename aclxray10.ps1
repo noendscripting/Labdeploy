@@ -174,10 +174,7 @@ $FabrikamDSConfigFile = $FabrikamDSConfigURI.Split("/")[-1]
 
 
 Write-Verbose "Artifacts location $($ArtifactLocation)"
-
-
 write-Verbose "Copying custom script artifacts"
-
 Get-ChildItem .\CustomScripts | ForEach-Object {
 
   Set-AzStorageBlobContent -File $_.FullName -Blob $_.FullName.Substring((Get-Item $PSScriptRoot).FullName.Length + 1) -Context $destcontext -Container $containerName -Force| Out-Null
