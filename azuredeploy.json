@@ -311,7 +311,8 @@
       "create-fileServerACLs.ps1",
       "{8FD9D5C3-89B9-48F8-B237-5DDBAF986EC5}.zip",
       "schemaData.zip",
-      "DSInternals_v4.4.1.zip"
+      "DSInternals_v4.4.1.zip",
+      "cleanup-ad.ps1"
     ]
 
   },
@@ -989,7 +990,7 @@
       ],
       "copy": {
         "name": "MemberServer",
-        "count": 0
+        "count": 3
       }
     },
     // File server custom script loop
@@ -1088,7 +1089,8 @@
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[8], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[9], parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[9], parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[10], parameters('_artifactsLocationSasToken'))]"
           ]//,
           //"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
         },

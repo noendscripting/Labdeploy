@@ -5,7 +5,7 @@ function write-log {
     param(
         [Parameter(ValueFromPipeline = $true, Mandatory = $true)]
         $message,
-        [ValidateSet("ERROR", "INFO", "WARN","SUCCESS")]
+        [ValidateSet("ERROR", "INFO", "WARN", "SUCCESS")]
         $severity,
         $logfile
 
@@ -78,7 +78,7 @@ if ($log.Length -ne 0) {
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion
-#region configuring enabling WinRM with certbased auth and configuring firewall
+<##region configuring enabling WinRM with certbased auth and configuring firewall
 $Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
 Enable-PSRemoting -SkipNetworkProfileCheck -Force
 New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
@@ -91,8 +91,8 @@ $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
 $domainName = $domainData.NetbiosName
 write-log "Connect to domain $($domainName)"
-#endregion
-#New-Service -Name "Generic Service" -BinaryPathName "C:\WINDOWS\System32\svchost.exe -k netsvcs"
+#endregion#>
+
 
 #region set up grouops, file extensions and ACL collections
 $businessGroups = Get-Content "$($scriptRoot)\groups.txt" 

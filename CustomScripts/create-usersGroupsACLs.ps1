@@ -1,9 +1,9 @@
 ﻿[CmdletBinding()]
 
 param(
-    [Parameter(Position = 0,Mandatory=$true)]
+    [Parameter(Position = 0, Mandatory = $true)]
     [string]$remoteUser,
-    [Parameter(Position = 1,Mandatory=$true)]
+    [Parameter(Position = 1, Mandatory = $true)]
     [string]$remotePassword
 )
 function write-log { 
@@ -76,7 +76,7 @@ Function add-OrganizationalUnits {
                         #Creating new OU and saving result
                         $result = New-ADOrganizationalUnit -Name $OuName -Path $TargetDomainDN -ProtectedFromAccidentalDeletion $false -PassThru
                         #Outputting Result to log 
-                        write-log "Added $($result.DistinguishedName)"
+                        write-log "Added $($result.DistinguishedName)" -severity SUCCESS
                         $TotalAddedOUs += 1
                     }
                     else {
@@ -138,7 +138,7 @@ Function Add-UsersToPrivelgedGroups {
         }
     }
 }
-function Set-OuDelegatiion {
+function Set-OuDelegation {
     param(
         [string]$group,
         [string]$csvRightsList,
@@ -288,9 +288,9 @@ Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
 write-log "Setting up delegations in OUs"
 
 0..2 | ForEach-Object {
-    Set-OuDelegatiion -group "tier$($PSItem)admins" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
+    Set-OuDelegation -group "tier$($PSItem)admins" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
 }
-Set-OuDelegatiion -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
+Set-OuDelegation -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 #endregion
 #region creating random local groups
 write-log "Creating random local groups"
@@ -347,7 +347,7 @@ get-aduser -filter * -searchbase $usersOU | ForEach-Object {
     $_groups | Get-Random -Count $_group_count | ForEach-Object {
 
         Add-ADGroupMember -Identity $PSItem -Members $_user
-        write-log "Addded user $($_user.display) to group $($PSItem)"
+        write-log "Addded user $($_user.Name) to group $($PSItem)" -severity SUCCESS
     }
     Clear-Variable _user
 }
@@ -376,11 +376,12 @@ $trustTargetList = (Get-ADTrust -Filter * -Properties Target).Target
 forEach ($trustTarget in $trustTargetList) {
     $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
     write-log "Getting list of groups from $($trustTarget) domain" 
-    $i = 0
+    $i = 1
     Do {
+        write-log "Getting list of groups from $($trustTarget) domain. Attempt number $($i)" 
         $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
         start-sleep -Seconds 60
-    } until ($foreignGroups.count -gt 0 -or $i -eq 10)
+    } until ($foreignGroups.count -gt 0 -or $i -eq 11)
     if ($foreignGroups.count -eq 0) {
         throw "Unable to get a list of groups from $($trustTarget) domain"
         exit
@@ -395,9 +396,9 @@ write-log "Creating deparment login script and assign permissions from generic g
 
 foreach ($group in $_new_groups) {
     $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\" -type directory
-    write-log "Created directory $($_folderResult.FullName)"
+    write-log "Created directory $($_folderResult.FullName)" -severity SUCCESS
     $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\logon.bat" -type file
-    write-log "Created file $($_fileREsult.FullName)"   
+    write-log "Created file $($_fileREsult.FullName)"   -severity SUCCESS
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
@@ -408,24 +409,11 @@ if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
 
 }
 write-log "Found GPO backup ZIP file at $($zipFileData.FullName)"
-#$tierOneGroupData = get-adgroup 'Tier1 Server Maintenance' -Properties Name, SID
-#$groupName = "$($domainName)\$($tierOneGroupData.name)"
-#$groupSID = $tierOneGroupData.SID.ToString()
-
+write-log "Expanding Zip file with GPO back up to $($scriptRoot)"
 Expand-Archive -Path $zipFileData.fullname -Force -DestinationPath $scriptRoot
+write-log "Expoanded zip file succesfully" -severity SUCCESS
 
-#$configXMPath = "$($scriptRoot)\$($zipFileData.basename)\DomainSysvol\GPO\Machine\Preferences\Groups\Groups.xml"
-#if ([string]::IsNullOrEmpty($configXMPath)) {
-#    throw "Failed extract zip file with GPO backup"
-
-#}
-#[xml]$GPOSettings = Get-Content $configXMPath
-
-#$GPOSettings.Groups.Group.Properties.Members.Member.Name = $groupName
-#write-log "Set Group Name in GPO Prefrences to $($groupName)"
-#$GPOSettings.Groups.Group.Properties.Members.Member.SID = $groupSID
-#write-log "Set Group SID in GPO Prefrences to $($groupSID)"
-#$GPOSettings.Save($configXMPath)
+write-log "Importing GPO from backup"
 $importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)" -CreateIfNeeded -TargetName 'Server Admin GPO'
 write-log "GPO $($importgpresult.DisplayName) added with id $($importgpresult.is)" -severity SUCCESS
 $linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN 
@@ -467,34 +455,62 @@ if ($domainFQDN -ne "eu.contosoad.com") {
     exit
 }
 write-log "Installing DSInternals module"
-#Expand-Archive -Path "$($scriptRoot)\DSInternals_v4.4.1.zip" -Force -DestinationPath "C:\Program Files\WindowsPowerShell\Modules"
-write-log "DS Internals Module Installed successfully" -severity SUCCESS
+Expand-Archive -Path "$($scriptRoot)\DSInternals_v4.4.1.zip" -Force -DestinationPath "C:\Program Files\WindowsPowerShell\Modules\DSInternals"
+
+if (Get-Module -Name DSInternals -ListAvailable) {
+    write-log "DS Internals Module Installed successfully" -severity SUCCESS
+}
+else {
+    throw "Failed to install module DSInternals. Failing script"
+    exit 
+}
 
 foreach ($trustTarget in $trustTargetList) {
 
     $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
-    $sidHistoryDB=@()
-    get-aduser -Filter 'FirstName -eq "Amari" -or FirstName -eq "Jaden" -or FirstName -eq "Jaylin" -or FirstName -eq "Jadyn"' -Properties SID, Fisrtname -Server $trustTarget -Credential $remoteCredentials | ForEach-Object {
-          $givenName = $psItem.GivenName
-$currentSId = (get-aduser -Filter * -Properties SID | where {$_.GivenName -eq $givenName}).sid
-$item = New-Object psobject -Property @{
-oldSid = $PsItem.Sid
-newSid = $currentSId
-}
-$sidHistoryDB += $item
+    $sidHistoryDB = @()
+    get-aduser -Filter 'GivenName -eq "Amari" -or GivenName -eq "Jaden" -or GivenName -eq "Jaylin" -or GivenName -eq "Jadyn"' -Properties SID, GivenName -Server $trustTarget -Credential $remoteCredentials | ForEach-Object {
+        $givenName = $psItem.GivenName
+        $samAccountName = (get-aduser -Filter * -Properties samAccountName | where { $_.GivenName -eq $givenName }).samAccountName
+        $item = New-Object psobject -Property @{
+            oldSid         = $PsItem.Sid
+            samAccountName = $samAccountName
+        }
+        $sidHistoryDB += $item
     }
-    Stop-Service -Name ntds -Force
+    write-log "Stopping NTDS service to add sidHistory"
+    $stopserviceResult = Stop-Service -Name ntds -Force -PassThru
+    if ($stopserviceResult.Status -eq 'Stopped') {
+        write-log "NTDS service stopped successfully" -severity SUCCESS
+    }
+    else {
+        throw "NTDS service failed to stop. Failing script"
+        exit
 
-foreach ($sidHistory in $sidHistoryDB)
-{
-    Add-ADDBSidHistory -SidHistory $sidHistory.oldSid  -ObjectSid $sidHistory.newSid  -DatabasePath C:\Windows\NTDS\ntds.dit
+    }
+    foreach ($sidHistory in $sidHistoryDB) {
+        Add-ADDBSidHistory -SidHistory $sidHistory.oldSid -SamAccountName $sidHistory.samAccountName  -DatabasePath C:\Windows\NTDS\ntds.dit
+
+        write-log "Addded sidHistory to user $($sidHistory.samAccountName)" -severity SUCCESS
+
     
-}
-Start-Service -Name ntds
+    }
+
+    write-log "Starting NTDS service"
+    $startServiceResult = Start-Service -Name ntds -PassThru
+
+    if ($startServiceResult.Status -eq 'Running') {
+        write-log "NTDS service started succesfully" -severity SUCCESS
+    }
+    else {
+        throw "NTDS failed to start. Failing script"
+        exit
+    }
+
+   
   
 
 }
-
-
 #endregion
+write-log "Script complete run succesfullt" -severity SUCCESS
 

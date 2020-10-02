@@ -61,11 +61,11 @@ Added shutdown schedule  to VMs
 [CmdletBinding()]
   
 Param(
-  #$vmsize = 'Standard_B2s',
-  $vmsize = 'Standard_B8Ms',
-  $region = 'westus2',
+  $vmsize = 'Standard_B2s',
+  #$vmsize = 'Standard_B8Ms',
+  $region = 'eastus',
   $RG = 'ACLXRAYLAB',
-  $shutdownTimeZone = 'Pacific Standard Time',
+  $shutdownTimeZone = 'Eastern Standard Time',
   $shutDownTime = '01:00',
   [bool]$redeploy = $false,
   $vnetname = 'ACLXRAYlabvnet',
