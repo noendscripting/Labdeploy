@@ -230,7 +230,7 @@
           "sku": "2019-Datacenter",
           "domainName": "fabrikamad.com",
           "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]",
-           "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
+          "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
           "CustoimScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
@@ -243,7 +243,7 @@
           "sku": "2016-Datacenter",
           "domainName": "eu.contosoad.com",
           "user": "[concat('eu\\',parameters('AdminUserName'))]",
-           "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
+          "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
           "CustoimScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
@@ -310,7 +310,6 @@
       "ou-rights.csv",
       "create-fileServerACLs.ps1",
       "{8FD9D5C3-89B9-48F8-B237-5DDBAF986EC5}.zip",
-      "schemaData.zip",
       "DSInternals_v4.4.1.zip",
       "cleanup-ad.ps1"
     ]
@@ -610,7 +609,7 @@
         "PublicIPCopy",
         "ForestBuild",
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[2])]"
-       
+
       ],
       "tags": {
         "displayName": "File Server NIC Loop"
@@ -749,7 +748,7 @@
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
         //"[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]"
         "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
-        
+
       ],
       "tags": {
         "displayName": "FABRIKAMAD-DC"
@@ -945,7 +944,6 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        //"DCCustomScript",
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),3)])]"
       ],
       "tags": {
@@ -1012,9 +1010,7 @@
         "typeHandlerVersion": "1.4",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": 
-            "[variables('VMBuildParams').params[add(copyIndex(),3)].CustoimScriptURis]"
-            ,
+          "fileUris": "[variables('VMBuildParams').params[add(copyIndex(),3)].CustoimScriptURis]",
           "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('VMBuildParams').params[add(copyIndex(),3)].CustomScriptFileName)]"
         }
       },
@@ -1089,10 +1085,8 @@
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[5], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[7], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[8], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[9], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[10], parameters('_artifactsLocationSasToken'))]"
-          ]//,
-          //"commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[9], parameters('_artifactsLocationSasToken'))]"
+          ] 
         },
         "protectedSettings": {
           "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
