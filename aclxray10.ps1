@@ -62,7 +62,6 @@ Added shutdown schedule  to VMs
   
 Param(
   $vmsize = 'Standard_B2s',
-  #$vmsize = 'Standard_B8Ms',
   $region = 'eastus',
   $RG = 'ACLXRAYLAB',
   $shutdownTimeZone = 'Eastern Standard Time',
@@ -83,8 +82,8 @@ if ([string]::IsNullOrEmpty($currentContext)) {
 
 }
 
-#verifying deployimnet subscription
-<#$title = "ACLXRAY Lab deployment"
+#Region verifying deployimnet subscription
+$title = "ACLXRAY Lab deployment"
 $message = "You are about to deploy 6 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
 $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
 $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
@@ -106,24 +105,18 @@ switch ($result)
       Select-AzSubscription -SubscriptionName $subscription
     }
   }
-}#>
-
-#
+}
+#endregion
 
 #-----------------------------------------------
 
 
 
-#Create Resource Group, Storage Account and Container
-if ($VerbosePreference -eq 'Continue')
-{
-  $InformationPreference = 'SilentlyContinue'
-}
-else {
-  $InformationPreference = 'Continue'
-}
+#region Create Resource Group, Storage Account and Container
+
 
 Get-AzResourceGroup -Name $RG -ErrorAction SilentlyContinue -ErrorVariable errorData | Out-Null
+#testing mode 
 if ([string]::IsNullOrEmpty($errorData) -and $VerbosePreference -eq "Continue")
 {
   write-Verbose "Testing phase reusing existing storage"
@@ -139,9 +132,7 @@ else {
   New-AzStorageContainer -Name $containerName -Context $storageAccount.context  | Out-Null
 
 }
-
-
-
+#endregion
 
 
 
