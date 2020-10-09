@@ -9,7 +9,7 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "VADMIN"
+      "defaultValue": "groot"
     },
     "virtualNetworkName": {
       "type": "string",
@@ -17,7 +17,7 @@
     },
     "adminPassword": {
       "type": "securestring",
-      "defaultValue": "Test@2016"
+      "defaultValue": "Microsoftie99999"
     },
     "publicIpAddressType": {
       "type": "string",
