@@ -34,7 +34,7 @@ The deployment consists of a single
 
 ### Prepare to deploy
 
-* [Clone repostory](https://www.howtogeek.com/451360/how-to-clone-a-github-repository/) or  ![dowload repository content as zip](/SupportFiles/DownloadRepo.PNG) and expand on local disk
+* [Clone repostory](https://www.howtogeek.com/451360/how-to-clone-a-github-repository/) or save repository as a zip file and expand on local disk ![dowload repository content as zip](/SupportFiles/DownloadRepo.PNG) 
 * If running deployment for the first time open powershell treminal as administrator and install required modules
 
 ### Deploy Lab with default settings
