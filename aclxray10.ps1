@@ -13,22 +13,24 @@
 
 .SYNOPSIS
 
-  Script deploys a test lab for AclXray including 7 VMs. Use your internal azure subscription to deploy this. 
+  Script deploys a test lab for AclXray including 6 VMs. Use your internal azure subscription to deploy this. 
 
 .DESCRIPTION
   
-    This will deploy a new resource group called ACLXRAYLAB with a new VNET called ACLXRAYlabvnet on 10.6.0.0/24. It will then create a new storage account, copy blob VHDs to that storage account
-    then use ARM template to deploy the lab VMs on basic_a1 size to the new vnet/rg. The VM names are: contosodc1, contosoex1, contosofs1, fabrikamdc1, fabrikamfs1, eucontosodc1, eufs1
-    all resources are deployed to WESTUS2, if you change this in the script, copy time will be very slow
+    This will deploy a new resource group called ACLXRAYLAB with a new VNET called ACLXRAYlabvnet on 10.6.0.0/24. It will then create a new storage account,use ARM template to deploy the lab VMs on basic_a1 size to the new vnet/rg. The VM names are: contosodc1, contosoex1, contosofs1, fabrikamdc1, fabrikamfs1, eucontosodc1, eufs1
+    all resources are deployed to EASTUS
 
-.PARAMETER <Parameter_Name>
-    vmsize for the vm sizes for all vms (standard_A2_V2 is default)
-    region is for deployment region (westus2 is default, source images are stored in westus2 as well so other regions will take longer to deploy)
-    rg is for the resourcegroup name. Default is aclxraylab
-    shutdownTimeZone is to to set time zone for shutdown schedler. Default Pacific Time Zone
-    redeploy true\false is to enable option redeploy lab if you preserved original VHDs and do not want to copy them again. Default fail
-    vnetname Name of the VNET for the lab default 'ACLXRAYlabvnet'
-    subnetname is named for the lab subnet. default 'subnet1'
+
+.PARAMETER   vmsize
+             Sets the vm sizes for all vms (standard_B2s is default)
+.PARAMETER    region 
+             Sets deployment region (eastus is default)
+.PARAMETER    rg
+             Sets resourcegroup name. (ACLXRAYLAB is default)
+.PARAMETER    shutdownTimeZone
+             Sets time zone for shutdown schedduler and a local time zone for servers. (Default EasternTime Zone)
+.PARAMETER    vnetname
+             Name of the VNET for the lab. (Default 'ACLXRAYlabvnet')
 
 
 
@@ -36,23 +38,11 @@
    The script will ask for credentials. These are the credentials for your azure subscription, not the VMs. VM creds are already set.
 
 .NOTES
-  Version:        9.0
+  Version:        10.0
   Author:         Mike Resnick Microsoft
-  Creation Date: 4/4/2018
+  Creation Date: 10/4/2020
 
- Added verification if user is already logged to Azure.
- Added confirmation user wants to deploy 7 VMs to existing subscription
- Added option to select another subscription or exit
- Added code in the copy progress bar to show GBs copied.
- Added verification to enable AzureRM aliase for Az module
- Moved all deployment functions into template
- Changed default size of the VMs to Standard_B2s to save money
- Added code to dispose of progress bar
- Added redeploy option if original disks were already copied
- Replaced variable with Out-Null where command created an and output was not needed
- Added a custom script for Windows Server 2012 R2 to run Windows Update and install if missing
-Added shutdown schedule  to VMs
-
+ 
 #This is for internal Microsoft use only
 
 #>
@@ -66,7 +56,6 @@ Param(
   $RG = 'ACLXRAYLAB',
   $shutdownTimeZone = 'Eastern Standard Time',
   $shutDownTime = '01:00',
-  [bool]$redeploy = $false,
   $vnetname = 'ACLXRAYlabvnet',
   $containerName = "storageartifacts"
 

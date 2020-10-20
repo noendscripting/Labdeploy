@@ -381,7 +381,7 @@ forEach ($trustTarget in $trustTargetList) {
         write-log "Getting list of groups from $($trustTarget) domain. Attempt number $($i)" 
         $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
         start-sleep -Seconds 60
-    } until ($foreignGroups.count -gt 0 -or $i -eq 11)
+    } until ($foreignGroups.count -gt 0 -or $i -eq 21)
     if ($foreignGroups.count -eq 0) {
         throw "Unable to get a list of groups from $($trustTarget) domain"
         exit

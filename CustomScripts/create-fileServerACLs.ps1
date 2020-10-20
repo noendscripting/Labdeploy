@@ -18,7 +18,7 @@ function write-log {
         "INFO" { [ConsoleColor]$messageColor = "Cyan" }
         "ERROR" { [ConsoleColor]$messageColor = "Red" }
         "WARN" { [ConsoleColor]$messageColor = "Yellow" }
-        "SUCCESS" { [ConsoleColor]$messageColor = "Yellow" }
+        "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
     Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
@@ -84,13 +84,13 @@ Enable-PSRemoting -SkipNetworkProfileCheck -Force
 New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
 New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
 Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
-#endregion
+#endregion#>
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
 $domainName = $domainData.NetbiosName
-write-log "Connect to domain $($domainName)"
+write-log "Connected to domain $($domainName)"
 #endregion#>
 
 
