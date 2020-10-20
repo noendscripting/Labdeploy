@@ -35,14 +35,14 @@ The deployment consists of a single
 ### Prepare to deploy
 
 * [Clone repostory](https://www.howtogeek.com/451360/how-to-clone-a-github-repository/) or save repository as a zip file and expand on local disk ![dowload repository content as zip](/SupportFiles/DownloadRepo.PNG) 
-* If running deployment for the first time open powershell treminal as administrator and install required modules
+* If running deployment for the first time open powershell terminal as administrator and install required modules
 
 ### Deploy Lab with default settings
 
-1 Open Powershell terminal  or use previusly opened terminal
-2 Using pwoershell command navigate to the root of the directory containing source files
-3 In the same terminal run Login-AzAccount and follow steps to log in to Azure 
-4 Run ./aclray10.ps1 to deploy the lab with default settings
+1. Open Powershell terminal  or use previusly opened terminal
+2. Using pwoershell command navigate to the root of the directory containing source files
+3. In the same terminal run Login-AzAccount and follow steps to log in to Azure 
+4. Run ./aclray10.ps1 to deploy the lab with default settings
 
 ### Deploy 
 
