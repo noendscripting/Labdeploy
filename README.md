@@ -2,10 +2,9 @@
 
 In this repository you will find files nesssary for deploying ACLXray Lab.
 
-
 ## What will be deployed to Azure IaaS
 
-The deployment consists of a single
+The deployment will create:
 
 * VNET
 * 2 Subnets
@@ -39,11 +38,11 @@ The deployment consists of a single
 
 ### Deploy Lab with default settings
 
-1. Open Powershell terminal  or use previusly opened terminal
-2. Using pwoershell command navigate to the root of the directory containing source files
-3. In the same terminal run Login-AzAccount and follow steps to log in to Azure 
-4. Run ./aclray10.ps1 to deploy the lab with default settings
+1. Open Powershell terminal or use previusly opened terminal
+2. Using powershell command navigate to the root of the directory containing source files
+3. In the same terminal run Login-AzAccount and follow steps to log in to Azure  
+4. Run ./aclray10.ps1 to deploy the lab with default settings and enter name of Resource Group, to be used for deployment, when prompted.
 
-### Deploy 
+### Deploy with custom settings
 
 

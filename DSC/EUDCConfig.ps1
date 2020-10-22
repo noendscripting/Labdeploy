@@ -16,8 +16,9 @@ Configuration DcConfig
 
 	)
 
-	Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc
+	Import-DscResource -ModuleName PSDscResources 
 	Import-DscResource -ModuleName ComputerManagementDsc
+	Import-DscResource -ModuleName ActiveDirectoryDsc
 	
 
 
@@ -30,14 +31,19 @@ Configuration DcConfig
 			ActionAfterReboot = 'ContinueConfiguration'
 			AllowModuleOverwrite = $true
 		}
-		TimeZone TimeZoneExample
+		TimeZone TimeZone
         {
 			isSingleInstance = 'Yes'
             TimeZone = $TimeZone
 
-        }
+		}
+		WindowsFeatureSet ADDS_Features
+		{
+			Name = @('RSAT-DNS-Server','AD-Domain-Services','RSAT-AD-AdminCenter','RSAT-ADDS','RSAT-AD-PowerShell','RSAT-AD-Tools','RSAT-Role-Tools')
+			Ensure = 'Present'
+		}
 
-		WindowsFeature DNS_RSAT
+		<#WindowsFeature DNS_RSAT
 		{ 
 			Ensure = "Present" 
 			Name = "RSAT-DNS-Server"
@@ -78,7 +84,7 @@ Configuration DcConfig
 		{
 			Ensure = 'Present'
 			Name   = 'RSAT-Role-Tools'
-		}
+		}#>
 		ADDomain CreateForest 
 		{ 
 			DomainName = $NetBiosDomainname            
@@ -91,7 +97,7 @@ Configuration DcConfig
 	 WaitForADDomain DscForestWait
         {
             DomainName = $DomainName
-            DependsOn =  '[WindowsFeature]ADDS_Install'
+            DependsOn =  '[WindowsFeatureSet]ADDS_Features'
 			WaitTimeout = 3600
 			WaitForValidCredentials = $true
 			Credential = $DomainAdminCredentials

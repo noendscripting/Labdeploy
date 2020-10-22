@@ -16,8 +16,9 @@ Configuration DcConfig
 
 	)
 
-	Import-DscResource -ModuleName PSDesiredStateConfiguration, ActiveDirectoryDsc
+	Import-DscResource -ModuleName PSDscResources 
 	Import-DscResource -ModuleName ComputerManagementDsc
+	Import-DscResource -ModuleName ActiveDirectoryDsc
 
 	Node $nodeName
 	{             
@@ -32,8 +33,13 @@ Configuration DcConfig
 			TimeZone         = $TimeZone
 
 		}
+		WindowsFeatureSet ADDS_Features
+		{
+			Name = @('RSAT-DNS-Server','AD-Domain-Services','RSAT-AD-AdminCenter','RSAT-ADDS','RSAT-AD-PowerShell','RSAT-AD-Tools','RSAT-Role-Tools')
+			Ensure = 'Present'
+		}
 
-		WindowsFeature DNS_RSAT { 
+		<#WindowsFeature DNS_RSAT { 
 			Ensure = "Present" 
 			Name   = "RSAT-DNS-Server"
 		}
@@ -67,7 +73,7 @@ Configuration DcConfig
 		WindowsFeature RSAT_Role_Tools {
 			Ensure = 'Present'
 			Name   = 'RSAT-Role-Tools'
-		}
+		}#>
 		
 		
 
@@ -77,7 +83,7 @@ Configuration DcConfig
 			Credential                    = $DomainAdminCredentials
 			SafemodeAdministratorPassword = $DomainAdminCredentials
 			DomainNetbiosName             = $NetBiosDomainname
-			DependsOn                     = '[WindowsFeature]ADDS_Install'
+			DependsOn                     = '[WindowsFeatureSet]ADDS_Features'
 		}
 		Script SetForwarders {
 			TestScript = 
