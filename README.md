@@ -13,6 +13,14 @@ The deployment will create:
 * 6 VM
 * Shutdown schedule for each VM
 * Public IP addreses for all VMs
+* Two forests one single domain and one suibdomain
+* File server attached to each domain
+* Users in each forest
+* Randomly generated groups with random memberships
+* Random ACLs on OUs and files  
+* Four accounts with SIM history entries
+
+> **WARNING**: Becuase all groups and ACLs are created randomly, if you delete and re-deploy lab you will have diffirent settings. SupportFiles folder has two scripts that can help with creating disk snapshots of each VM and then creating a new lab VMs from snapshot if you want to roll back changes. Scripts are provided as is
 
 ### Deployment diagram
 
@@ -25,7 +33,7 @@ The deployment will create:
 * Access to Azure Subscriotion with contributor role and ability to create and configure virtual networks
 * Following powershell modules [installed](https://docs.microsoft.com/en-us/powershell/scripting/developer/module/installing-a-powershell-module?view=powershell-7) on your source system
   * Az
-  * PSDesiredStateConfiguration
+  * PSDscResources
   * ActiveDirectoryDsc
   * ComputerManagementDsc
   * StorageDsc
@@ -33,7 +41,8 @@ The deployment will create:
 
 ### Prepare to deploy
 
-* [Clone repostory](https://www.howtogeek.com/451360/how-to-clone-a-github-repository/) or save repository as a zip file and expand on local disk ![dowload repository content as zip](/SupportFiles/DownloadRepo.PNG) 
+* (optional step for developers) [Clone repostory](https://www.howtogeek.com/451360/how-to-clone-a-github-repository/) or save repository as a zip file and expand on local disk ![dowload repository content as zip](/SupportFiles/DownloadRepo.PNG)
+* Unzip installation files into a local directory
 * If running deployment for the first time open powershell terminal as administrator and install required modules
 
 ### Deploy Lab with default settings
@@ -45,4 +54,18 @@ The deployment will create:
 
 ### Deploy with custom settings
 
+Detailed ifomation about parameters can be  found in the parameters readme file
+You customize following settings in the lab:
 
+* VM Size (default 'Standard_B2s')
+* Region  (default 'eastus')
+* Shutodown Time Zone (default 'Eastern Standard Time')
+* Shutdown Time (deafult '01:00' 24 hour time)
+* Virtual Netowrk Name (default 'ACLXRAYlabvnet')
+* Container Name (default 'storageartifacts')
+
+#### Example
+
+In this example we will deploy ACLXRAY Lab into aletrnative region with aleternative Shutdown Time zone and alertnative virtual network name.
+
+  ./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time' -vnetname VNET02
