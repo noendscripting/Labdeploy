@@ -8,7 +8,9 @@ Documneted paremeters for the aclxray10.ps file
 
 Parameter specicifies size of each VMs in the deployment. Needs a value supported by Azure Compute configuration, to get a list of all supported size name, run followin Az powershell command:
 
->`Get-AzVMSize -Location <name of Azure Region where want to deploying this lab> | select Name`
+```pwsh
+Get-AzVMSize -Location <name of Azure Region where want to deploying this lab> | select Name
+```
 
 ### Properties
 
@@ -38,7 +40,7 @@ Get-AzLocation | select Location,DisplayName
 
 Parameter specifies name of the resource group. Can be either existing group or name of a resource group you want to create as part of deployment.
 
-> :warning: If you select existing resource group, all previusly deployed ACLXRAY lab componenets will be over written.
+> :warning: **WARNING** If you select existing resource group, all previusly deployed ACLXRAY lab componenets will be over written.
 ### Properties
 
 * Type: string
