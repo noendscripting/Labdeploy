@@ -67,7 +67,7 @@ You customize following settings in the lab:
 #### Example
 
 In this example we will deploy ACLXRAY Lab into aletrnative region with aleternative Shutdown Time zone and alertnative virtual network name.
-
+=======
 '''pwsh
 ./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
 ```
