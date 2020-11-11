@@ -11,7 +11,7 @@ The deployment will create:
 * 2 Network Security Groups
 * Storage Account
 * 6 VM
-* Shutdown schedule for each VM
+* Shutdown schedule for each VM to save costs
 * Public IP addreses for all VMs
 * Two forests one single domain and one suibdomain
 * File server attached to each domain
@@ -54,7 +54,7 @@ The deployment will create:
 
 ### Deploy with custom settings
 
-Detailed ifomation about parameters can be  found in the parameters readme file
+Detailed ifomation about parameters can be  found in the [parameters readme](SupportFiles\PARAMETERS.md) file
 You customize following settings in the lab:
 
 * VM Size (default 'Standard_B2s')
