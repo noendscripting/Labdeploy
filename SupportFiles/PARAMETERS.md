@@ -1,6 +1,6 @@
 # Labdeploy Deployment Parameters
 
-Documneted paremeters for the aclxray10.ps file
+Documented parameters for the aclxray10.ps file
 
 ## -vmsize
 
@@ -75,7 +75,7 @@ Parameter specicifies time in 24 hour format, when shutdown schedule excutes VM 
 
 ### Description
 
-Parameter specifies name of the vrtual network(VNET). Can be either existing VNET or name of a VNET you want to create as part of deployment.
+Parameter specifies name of the virtual network (VNET). Can be either existing VNET or name of a VNET you want to create as part of deployment.
 
 > :warning: **WARNING** If you select existing VNET name, all ACLXRAYLAB network related items will be reset to original configuration,  i.g if you converted one of the public IP addresses to static.
 

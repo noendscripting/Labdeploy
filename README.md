@@ -12,8 +12,8 @@ The deployment will create:
 * Storage Account
 * 6 VM
 * Shutdown schedule for each VM to save costs
-* Public IP addreses for all VMs
-* Two forests one single domain and one suibdomain
+* Public IP addresses for all VMs
+* Two forests one single domain and one subdomain
 * File server attached to each domain
 * Users in each forest
 * Randomly generated groups with random memberships
@@ -47,7 +47,7 @@ The deployment will create:
 
 ### Deploy Lab with default settings
 
-1. Open Powershell terminal or use previusly opened terminal
+1. Open Powershell terminal or use previously opened terminal
 2. Using powershell command navigate to the root of the directory containing source files
 3. In the same terminal run Login-AzAccount and follow steps to log in to Azure  
 4. Run ./aclray10.ps1 to deploy the lab with default settings and enter name of Resource Group, to be used for deployment, when prompted.
@@ -59,14 +59,15 @@ You customize following settings in the lab:
 
 * VM Size (default 'Standard_B2s')
 * Region  (default 'eastus')
-* Shutodown Time Zone (default 'Eastern Standard Time')
+* Shutdown Time Zone (default 'Eastern Standard Time')
 * Shutdown Time (deafult '01:00' 24 hour time)
-* Virtual Netowrk Name (default 'ACLXRAYlabvnet')
+* Virtual Network Name (default 'ACLXRAYlabvnet')
 * Container Name (default 'storageartifacts')
 
 #### Example
 
 In this example we will deploy ACLXRAY Lab into aletrnative region with aleternative Shutdown Time zone and alertnative virtual network name.
+
 =======
 '''pwsh
 ./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
