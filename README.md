@@ -54,7 +54,7 @@ The deployment will create:
 
 ### Deploy with custom settings
 
-Detailed ifomation about parameters can be  found in the [parameters readme](SupportFiles\PARAMETERS.md) file
+Detailed ifomation about parameters can be  found in the [parameters readme](SupportFiles/PARAMETERS.md) file
 You customize following settings in the lab:
 
 * VM Size (default 'Standard_B2s')
