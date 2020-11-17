@@ -91,8 +91,6 @@ Parameter specifies name of the virtual network (VNET). Can be either existing V
 
 Parameter specifies name of the storage container where DSC and custiom scripts will be uploded. Can be either existing container name or a new one.
 
-
-
 ### Properties
 
 * Type: string
