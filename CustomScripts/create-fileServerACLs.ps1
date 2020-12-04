@@ -21,13 +21,11 @@ function write-log {
         "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
-    Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
+    Write-Host "$($timeStamp)`t[$($severity)]`$($message)" -ForegroundColor $messageColor
     if (!([string]::IsNullOrEmpty($logfile))) {
-        write-output "$($timeStamp) $($severity) $($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
+        write-output "$($timeStamp)`t[$($severity)]`t$($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
 }
-
-
 
 function set-CustomACLs {
     param(
@@ -78,13 +76,11 @@ if ($log.Length -ne 0) {
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion
-<##region configuring enabling WinRM with certbased auth and configuring firewall
-$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
-Enable-PSRemoting -SkipNetworkProfileCheck -Force
-New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
-New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
-Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
-#endregion#>
+#region Set .Net to use TLS settings from OS
+write-log "Setting TLS negotiation porperties for .Net 4.x"
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+write-log "Setting TLS negotiation porperties for .Net 2.x"
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
