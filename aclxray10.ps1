@@ -158,11 +158,11 @@ Write-Verbose "Destination SAA $($destSAStoken)"
 #region publishing DSC package data
 $ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
 $FabrikamDSConfigPath = "$($PSScriptRoot)\DSC\FabrikamDCConfig.ps1"
-$EUDSConfigPath = "$($PSScriptRoot)\DSC\EUDCConfig.ps1"
-Write-Host "Publishing EUDCConfig DSC package"
+#$EUDSConfigPath = "$($PSScriptRoot)\DSC\EUDCConfig.ps1"
+<#Write-Host "Publishing EUDCConfig DSC package"
 $EUDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $EUDSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $EUDSConfigFile = $EUDSConfigURI.Split("/")[-1]
-Write-Host "Succcessfully published DSC config file $($EUDSConfigFile)"
+Write-Host "Succcessfully published DSC config file $($EUDSConfigFile)"#>
 Write-Host "Publishing ContosoDCConfig DSC package"
 $ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
@@ -196,7 +196,7 @@ $DeployParameters = @{
   "_artifactsLocationSasToken"      = $artifactSASTokenSecure 
   "ContosoDCConfigArchiveFileName"  = $ContosoDSConfigFile
   "FabrikamDCConfigArchiveFileName" = $FabrikamDSConfigFile
-  "EUDSCConfigAcrhiveFileName"      = $EUDSConfigFile
+  #"EUDSCConfigAcrhiveFileName"      = $EUDSConfigFile
 }
 
 

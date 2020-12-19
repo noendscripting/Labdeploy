@@ -156,10 +156,10 @@
     },
     "FabrikamDCConfigArchiveFileName": {
       "type": "string"
-    },
+    }/* ,
     "EUDSCConfigAcrhiveFileName": {
       "type": "string"
-    }
+    } */
   },
 
   "variables": {
@@ -196,21 +196,6 @@
           "function": "[variables('FabrikamDscConfigurationFunction')]"
         },
         {
-          "virtualMachineName": "eucontosodc1",
-          "CustomIPAddress": "[variables('eucontosodcDNSServerIP')]",
-          "subnetRef": "[variables('subnetRef')[0]]",
-          "vmSize": "[parameters('virtualMachineSize')]",
-          "sku": "2012-R2-Datacenter",
-          "domainName": "contosoad.com",
-          "NetBiosDomainname": "eu",
-          "ForwarderIPaddress": "",
-          "ForwarderDomain": "",
-          "user": "[concat('contosoad.com\\',parameters('AdminUserName'))]",
-          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('EUDSCConfigAcrhiveFileName'))]",
-          "script": "[variables('EUDscConfigurationScript')]",
-          "function": "[variables('EUDscConfigurationFunction')]"
-        },
-        {
           "virtualMachineName": "contosofs1",
           "subnetRef": "[variables('subnetRef')[0]]",
           "vmSize": "[parameters('virtualMachineSize')]",
@@ -230,19 +215,6 @@
           "sku": "2019-Datacenter",
           "domainName": "fabrikamad.com",
           "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]",
-          "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
-          "CustoimScriptURis": [
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
-          ]
-        },
-        {
-          "virtualMachineName": "eufs1",
-          "subnetRef": "[variables('subnetRef')[0]]",
-          "vmSize": "[parameters('virtualMachineSize')]",
-          "sku": "2016-Datacenter",
-          "domainName": "eu.contosoad.com",
-          "user": "[concat('eu\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomScriptScriptContent')[6]]",
           "CustoimScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/',variables('CustomScriptScriptContent')[6] ,parameters('_artifactsLocationSasToken'))]",
@@ -270,18 +242,18 @@
       "[concat(variables('VMBuildParams').params[0].virtualMachineName,'PUBLICIP')]",
       "[concat(variables('VMBuildParams').params[1].virtualMachineName,'PUBLICIP')]",
       "[concat(variables('VMBuildParams').params[2].virtualMachineName,'PUBLICIP')]",
-      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'PUBLICIP')]",
-      "[concat(variables('VMBuildParams').params[4].virtualMachineName,'PUBLICIP')]",
-      "[concat(variables('VMBuildParams').params[5].virtualMachineName,'PUBLICIP')]"
+      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'PUBLICIP')]"//,
+      //"[concat(variables('VMBuildParams').params[4].virtualMachineName,'PUBLICIP')]",
+      //"[concat(variables('VMBuildParams').params[5].virtualMachineName,'PUBLICIP')]"
 
     ],
     "privateNICName": [
       "[concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC')]",
       "[concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC')]",
       "[concat(variables('VMBuildParams').params[2].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[4].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[5].virtualMachineName,'NIC')]"
+      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'NIC')]"//,
+      //"[concat(variables('VMBuildParams').params[4].virtualMachineName,'NIC')]",
+      //"[concat(variables('VMBuildParams').params[5].virtualMachineName,'NIC')]"
 
     ],
     "VnetIpArray": "[split(variables('VirtualNetworkIPPrefix'),'.')]",
@@ -290,12 +262,12 @@
     "contosoSubnetIPArray": "[split(variables('contosoSubnetIpPrefix'),'.')]",
     "fabrikamSubnetIPArray": "[split(variables('fabrikamSubnetIpPrefix'),'.')]",
     "contosoDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
-    "eucontosodcDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
+    //"eucontosodcDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
     "fabrikamDNSServerIP": "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]",
     "ContosoDscConfigurationFunction": "DcConfig",
     "ContosoDscConfigurationScript": "ContosoDCConfig.ps1",
-    "EUDscConfigurationFunction": "DcConfig",
-    "EUDscConfigurationScript": "EUDCConfig.ps1",
+    //"EUDscConfigurationFunction": "DcConfig",
+    //"EUDscConfigurationScript": "EUDCConfig.ps1",
     "FabrikamDscConfigurationFunction": "DCConfig",
     "FabrikamDscConfigurationScript": "FabrikamDCConfig.ps1",
 
@@ -564,51 +536,17 @@
         "count": 2
       }
     },
-    // EU DC NIC
-    {
-      "comments": "# EU Contoso DC NIC",
-      "name": "[variables('privateNICName')[2]]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "PublicIPCopy",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ],
-      "tags": {
-        "displayName": "EU DC NIC"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('VMBuildParams').params[2].CustomIPAddress]",
-              "subnet": {
-                "id": "[variables('VMBuildParams').params[2].subnetRef]"
-              },
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[2])]"
-              }
-            }
-          }
-        ],
-        "dnsSettings": {
-          "dnsServers": [ "[variables('VMBuildParams').params[0].CustomIPAddress]" ]
-        }
-      }
-    },
+    
     //File Server NIC LOOP
     {
-      "name": "[variables('privateNICName')[add(copyIndex(),3)]]",
+      "name": "[variables('privateNICName')[add(copyIndex(),2)]]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "PublicIPCopy",
         "ForestBuild",
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[2])]"
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]"
 
       ],
       "tags": {
@@ -621,11 +559,11 @@
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[variables('VMBuildParams').params[add(copyIndex(),3)].subnetRef]"
+                "id": "[variables('VMBuildParams').params[add(copyIndex(),2)].subnetRef]"
               },
               "privateIPAllocationMethod": "Dynamic",
               "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[add(copyIndex(),3)])]"
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[add(copyIndex(),2)])]"
               }
             }
           }
@@ -637,7 +575,7 @@
       },
       "copy": {
         "name": "FileServerNic",
-        "count": 3
+        "count": 2
       }
     },
     //CONTOSOAD DC
@@ -841,7 +779,7 @@
       ]
     },
     // EU DC
-    {
+    /* {
       "name": "[variables('VMBuildParams').params[2].virtualMachineName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
@@ -935,23 +873,23 @@
         }
 
       ]
-    },
+    }, */
 
     //File Server Loop
     {
-      "name": "[variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName]",
+      "name": "[variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),3)])]"
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),2)])]"
       ],
       "tags": {
         "displayName": "File Server Loop"
       },
       "properties": {
         "osProfile": {
-          "computerName": "[variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName]",
+          "computerName": "[variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -959,13 +897,13 @@
           }
         },
         "hardwareProfile": {
-          "vmSize": "[variables('VMBuildParams').params[add(copyIndex(),3)].vmSize]"
+          "vmSize": "[variables('VMBuildParams').params[add(copyIndex(),2)].vmSize]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "[variables('VMBuildParams').params[add(copyIndex(),3)].sku]",
+            "sku": "[variables('VMBuildParams').params[add(copyIndex(),2)].sku]",
             "version": "latest"
           },
           "osDisk": {
@@ -976,7 +914,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[add(copyIndex(),3)])]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[add(copyIndex(),2)])]"
             }
           ]
 
@@ -988,18 +926,18 @@
       ],
       "copy": {
         "name": "MemberServer",
-        "count": 3
+        "count": 2
       }
     },
     // File server custom script loop
     {
-      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'/',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'-FSCustomScript')]",
+      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'/',variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'-FSCustomScript')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "DCCustomScript",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,concat('joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,concat('joindomain-',variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName))]"
       ],
       "tags": {
         "displayName": "FSConfugScript"
@@ -1010,12 +948,12 @@
         "typeHandlerVersion": "1.4",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": "[variables('VMBuildParams').params[add(copyIndex(),3)].CustoimScriptURis]",
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('VMBuildParams').params[add(copyIndex(),3)].CustomScriptFileName)]"
+          "fileUris": "[variables('VMBuildParams').params[add(copyIndex(),2)].CustoimScriptURis]",
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('VMBuildParams').params[add(copyIndex(),2)].CustomScriptFileName)]"
         }
       },
       "copy": {
-        "count": 3,
+        "count": 2,
         "name": "FSCustomScript"
       }
     },
@@ -1024,13 +962,12 @@
       "comments": "Join domain - JsonADDomainExtension",
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName,'/joindomain-',variables('VMBuildParams').params[add(copyIndex(),3)].virtualMachineName)]",
+      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'/joindomain-',variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName)]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "MemberServer",
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[0].virtualMachineName,concat(variables('VMBuildParams').params[0].NetBiosDomainname,'-DCConfig'))]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[1].virtualMachineName,concat(variables('VMBuildParams').params[1].NetBiosDomainname,'-DCConfig'))]",
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[1].virtualMachineName,concat(variables('VMBuildParams').params[1].NetBiosDomainname,'-DCConfig'))]"
       ],
       "tags": {
         "displayName": "joinDomain"
@@ -1041,8 +978,8 @@
         "type": "JsonADDomainExtension",
         "typeHandlerVersion": "1.3",
         "settings": {
-          "Name": "[variables('VMBuildParams').params[add(copyIndex(),3)].domainName]",
-          "User": "[variables('VMBuildParams').params[add(copyIndex(),3)].user]",
+          "Name": "[variables('VMBuildParams').params[add(copyIndex(),2)].domainName]",
+          "User": "[variables('VMBuildParams').params[add(copyIndex(),2)].user]",
           "Restart": "true",
           "Options": 3
         },
@@ -1052,7 +989,7 @@
       },
       "copy": {
         "name": "joindomain",
-        "count": 3
+        "count": 2
       }
     },
 
@@ -1093,7 +1030,7 @@
         }
       },
       "copy": {
-        "count": 3,
+        "count": 2,
         "name": "DCCustomScript"
       }
     },
@@ -1135,7 +1072,7 @@
       "apiVersion": "2018-05-01",
       "name": "set-VNET-DNS",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[2].virtualMachineName,concat(variables('VMBuildParams').params[2].NetBiosDomainname,'-DCConfig'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',variables('VMBuildParams').params[1].virtualMachineName,concat(variables('VMBuildParams').params[1].NetBiosDomainname,'-DCConfig'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -1173,7 +1110,7 @@
                 "dhcpOptions": {
                   "dnsServers": [
                     "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
-                    "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
+                    //"[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
                     "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]"
                   ]
                 }

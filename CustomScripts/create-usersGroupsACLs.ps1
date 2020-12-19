@@ -272,24 +272,24 @@ $_new_groups | ForEach-Object {
 #endregion
 #region creating priveleged groups
 write-log "Creating privilged groups"
-New-ADGroup tier0admins -SamAccountName tier0admins -DisplayName "tier0admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
+<#New-ADGroup tier0admins -SamAccountName tier0admins -DisplayName "tier0admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
 New-ADGroup "AD Infrastructure Engineers" -SamAccountName "AD Infrastructure Engineers" -DisplayName "AD Infrastructure Engineers" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
 New-ADGroup tier1admins -SamAccountName tier1admins -DisplayName "tier1admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"
-New-ADGroup "Tier1 Server Maintenance" -SamAccountName "Tier1 Server Maintenance" -DisplayName "Tier1 Server Maintenance" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"
-New-ADGroup "tier2admins" -SamAccountName "tier2admins" -DisplayName "tier2admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 2,OU=Admin,$($domainDN)"
-New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -DisplayName "Service Desk Operators" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 2,OU=Admin,$($domainDN)"
+New-ADGroup "Tier1 Server Maintenance" -SamAccountName "Tier1 Server Maintenance" -DisplayName "Tier1 Server Maintenance" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"#>
+New-ADGroup "tier2admins" -SamAccountName "tier2admins" -DisplayName "tier2admins" -GroupScope Global -GroupCategory Security -Path $groupsOU
+New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -DisplayName "Service Desk Operators" -GroupScope Global -GroupCategory Security -Path $groupsOU
 
-write-log "Adding AD Infrastructure Engineers to Domain Admins"
+<#write-log "Adding AD Infrastructure Engineers to Domain Admins"
 $privlegedADGroup = Get-ADGroup "AD Infrastructure Engineers"
-Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup
+Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup #>
 #endregion
 #region Adding OU delegations
 write-log "Setting up delegations in OUs"
 
-0..2 | ForEach-Object {
+<#0..2 | ForEach-Object {
     Set-OuDelegation -group "tier$($PSItem)admins" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
-}
-Set-OuDelegation -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)"
+}#>
+Set-OuDelegation -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)" 
 #endregion
 #region creating random local groups
 write-log "Creating random local groups"
@@ -325,17 +325,17 @@ $_new_groups | ForEach-Object { $gname = $_
 }
 #endregion
 #region create privleged users
-write-log "Creating Tier 0 "
+<# write-log "Creating Tier 0 "
 add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)" -prefix "EA" -Tier 0
 write-log "Creating Tier 1 "
 add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)" -prefix "SA"  -Tier 1
 write-log "Creating Tier 2 "
-add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)" -prefix "WSA"  -Tier 2
+add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)" -prefix "WSA"  -Tier 2 #>
 #endregion
 #region add privleged users to privelged groups
-add-UsersToPrivelgedGroups -groups "tier0admins", "AD Infrastructure Engineers" -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)"
-add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)"
-add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)"
+<# add-UsersToPrivelgedGroups -groups "tier0admins", "AD Infrastructure Engineers" -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)"
+add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)"#>
+add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou $groupsOU
 #endregion
 #region populating generic groups with users
 write-log "Adding random users to Universal and Local groups"
@@ -379,6 +379,7 @@ forEach ($trustTarget in $trustTargetList) {
     Do {
         write-log "Getting list of groups from $($trustTarget) domain. Attempt number $($i)" 
         $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
+        $i++
         start-sleep -Seconds 60
     } until ($foreignGroups.count -gt 0 -or $i -eq 21)
     if ($foreignGroups.count -eq 0) {
@@ -398,11 +399,12 @@ foreach ($group in $_new_groups) {
     write-log "Created directory $($_folderResult.FullName)" -severity SUCCESS
     $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   -severity SUCCESS
+    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\$($group)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
 #region Import GPOs
-$zipFileData = Get-ChildItem "$($scriptRoot)\{*.zip" | Select-Object FullName, BaseName
+<# $zipFileData = Get-ChildItem "$($scriptRoot)\{*.zip" | Select-Object FullName, BaseName
 if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
     throw "Failed find zip file with GPO backup"
 
@@ -416,7 +418,7 @@ write-log "Importing GPO from backup"
 $importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)" -CreateIfNeeded -TargetName 'Server Admin GPO'
 write-log "GPO $($importgpresult.DisplayName) added with id $($importgpresult.is)" -severity SUCCESS
 $linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN 
-write-log "GPO $($linkedGPOresult.DisplayName) linked to $($linkedGPOresult.Target)" -severity SUCCESS
+write-log "GPO $($linkedGPOresult.DisplayName) linked to $($linkedGPOresult.Target)" -severity SUCCESS #>
 #endregion
 <##region add exchange schema
 if ($domainFQDN -ne "fabrikamad.com") {
@@ -449,7 +451,7 @@ If (Test-Path "$($scriptRoot)\schemaData") {
 }
 #endregion#>
 #region SID history
-if ($domainFQDN -ne "eu.contosoad.com") {
+if ($domainFQDN -ne "fabrikamad.com") {
     write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
     exit
 }
