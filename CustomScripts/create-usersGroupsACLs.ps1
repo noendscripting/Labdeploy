@@ -36,79 +36,6 @@ function write-log {
 
 
 }
-Function add-OrganizationalUnits {
-    param(
-        # Parameter help description
-        [Parameter(Mandatory = $true)]
-        [string]$OUList,
-        [string]$TargetDomainDN
-    )
-
-
-    #Getting list of OUs filtreing for uniqueness and removing Source Domain Distinguished Name
-    write-log "Getting list of domains from file $($OUList)"
-    $ImportedOUs = (Get-Content $OUList)
-    write-log "Total $($ImportedOus.Count) unique OUs found" -severity SUCCESS
-    [int]$TotalAddedOUs = 0 
-    # Going over a list 
-    ForEach ($importedOU in $ImportedOUs) {
-        #Placing OUs into temprary array 
-        [string[]]$arrayOU = $importedOU.Split(",")
-        #Getting total number of OU branches 
-        [int]$ouLength = $arrayOU.Length - 1
-        #Setting temp variables
-        $tempPath = $null
-        $OuName = $null
-        #Starting loop to process each OU branch in reverse order form the root Domain DN
-        Do {
-            #Creating first OU path going form the last ( closest to the domain root) OU branch 
-            $tempPath = "$($arrayOU[$ouLength]),$($tempPath)"
-            #Checking if OU exists
-            If (!([adsi]::Exists("LDAP://$($tempPath)$($TargetDomainDN)"))) {
-                #If OU does not exist, verifying this is the first branch under the root
-                if ($ouLength -eq $arrayOU.Length - 1) {   
-                    #if first branch under the root Domain DN
-                    #verifying is not a container
-                    if ($arrayOU[$ouLength].Substring(0, 2) -ne "CN") {
-
-                        #Removing OU= or CN from the OU branch
-                        $OuName = $arrayOU[$ouLength].Substring(3, ($arrayOU[$ouLength].Length - 3))  
-                        #Creating new OU and saving result
-                        $result = New-ADOrganizationalUnit -Name $OuName -Path $TargetDomainDN -ProtectedFromAccidentalDeletion $false -PassThru
-                        #Outputting Result to log 
-                        write-log "Added $($result.DistinguishedName)" -severity SUCCESS
-                        $TotalAddedOUs += 1
-                    }
-                    else {
-                        write-log -message "Container $($arrayOU[$ouLength]) needs to be created by a separate process. " -severity WARN
-                    }
-                }
-                else {   
-                    #If not the first branch under domain Root DN
-                    #Removing OU= or CN from the OU branch
-                    $OuName = $arrayOU[$ouLength].Substring(3, ($arrayOU[$ouLength].Length - 3))
-                    #Creating new OU and saving result
-                    $result = New-ADOrganizationalUnit -Name $OuName -Path $parentPath -ProtectedFromAccidentalDeletion $false  -PassThru
-                    write-log "Added $($result.DistinguishedName)" -severity SUCCESS
-                    $TotalAddedOUs += 1
-                }
-            }
-            else {
-                #If OU already exists, recoding the result.
-                write-log "OU $($tempPath)$($TargetDomainDN) already exists"
-            }
-            #Creating parent path for the next OU branch 
-            $parentPath = "$($tempPath)$($TargetDomainDN)"
-            #Verify that result variable is not empty and clearing contents
-            if ($null -ne $result) {
-                Clear-Variable result
-            }
-            #Substruting from OU iterator to go to next branch in the loop
-            $ouLength -= 1
-        } while ($ouLength -ge 0) # terminate after OU iterator is less than 0
-    }
-    write-log "Total Added $($TotalAddedOUs)" -severity SUCCESS
-}
 Function add-PrivelegedUsers {
     param (
         [string]$ou,
@@ -221,17 +148,11 @@ $domainData = Get-ADDomain
 $domainDN = $domainData.distinguishedname
 $domainName = $domainData.NetbiosName
 $domainFQDN = $domainData.DNSRoot
-
-
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
-#endregion
-#region adding OUs
-add-OrganizationalUnits -OUList "$($scriptRoot)\ous.txt" -TargetDomainDN $domainDN
 #endregion
 #region adding users
 $usersOU = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
 write-log "Adding user to $($domainName)"
-
 foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
     $name = $user.first + " " + $user.last
 
@@ -261,34 +182,18 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
     Clear-Variable name
 }
 #endregion
-#region creating deparmnet groups
+#region getting deparmnet groups
 write-log "Creating deparatment groups"
 $groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
-$_new_groups = Get-Content "$($scriptRoot)\groups.txt" 
-$_new_groups | ForEach-Object {
-    New-ADGroup $_ -SamAccountName $_ -DisplayName "$_" -GroupScope Global -GroupCategory Security -Path $groupsOU
-    write-log "Created departmnet group $($_)" -severity SUCCESS
-}
+$departmentGroups = get-adgroup -filter * -SearchBase $groupOU
 #endregion
 #region creating priveleged groups
 write-log "Creating privilged groups"
-<#New-ADGroup tier0admins -SamAccountName tier0admins -DisplayName "tier0admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
-New-ADGroup "AD Infrastructure Engineers" -SamAccountName "AD Infrastructure Engineers" -DisplayName "AD Infrastructure Engineers" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 0,OU=Admin,$($domainDN)"
-New-ADGroup tier1admins -SamAccountName tier1admins -DisplayName "tier1admins" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"
-New-ADGroup "Tier1 Server Maintenance" -SamAccountName "Tier1 Server Maintenance" -DisplayName "Tier1 Server Maintenance" -GroupScope Global -GroupCategory Security -Path "OU=Groups,OU=Tier 1,OU=Admin,$($domainDN)"#>
 New-ADGroup "tier2admins" -SamAccountName "tier2admins" -DisplayName "tier2admins" -GroupScope Global -GroupCategory Security -Path $groupsOU
 New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -DisplayName "Service Desk Operators" -GroupScope Global -GroupCategory Security -Path $groupsOU
-
-<#write-log "Adding AD Infrastructure Engineers to Domain Admins"
-$privlegedADGroup = Get-ADGroup "AD Infrastructure Engineers"
-Get-ADGroup "Domain Admins" | Add-ADGroupMember -Members $privlegedADGroup #>
 #endregion
 #region Adding OU delegations
 write-log "Setting up delegations in OUs"
-
-<#0..2 | ForEach-Object {
-    Set-OuDelegation -group "tier$($PSItem)admins" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Tier $($PsItem),OU=Admin,$($domainDN)"
-}#>
 Set-OuDelegation -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)" 
 #endregion
 #region creating random local groups
@@ -309,10 +214,10 @@ write-log "Creating random universal groups"
 #endregion
 #region populatuing departmnent groups with users and adding departmnet value to the user properties
 get-aduser -filter * -SearchBase $usersOU | ForEach-Object {
-    $_department = $_new_groups | get-random
-    $_ | Set-ADUser  -department $_department
-    Get-ADgroup $_department | Add-ADGroupMember -members $_
-    write-log "Added user $($_) to Depratmnet group $($_department)" -severity SUCCESS
+    $departmentGroup = $departmentGroups | get-random
+    $_ | Set-ADUser  -department $departmentGroup.DisplayName
+    Add-ADGroupMember -members $_ -Identity $departmentGroup.objectSID
+    write-log "Added user $($_) to Depratmnet group $($departmentGroup.DisplayName)" -severity SUCCESS
 }
 #endregion
 #region create manager\report entries for each department
@@ -324,17 +229,7 @@ $_new_groups | ForEach-Object { $gname = $_
     write-log "Added $($manager.Name) as Manager to members of group $($gname)" -severity SUCCESS
 }
 #endregion
-#region create privleged users
-<# write-log "Creating Tier 0 "
-add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)" -prefix "EA" -Tier 0
-write-log "Creating Tier 1 "
-add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)" -prefix "SA"  -Tier 1
-write-log "Creating Tier 2 "
-add-PrivelegedUsers -ou "OU=Accounts,OU=Tier 2,OU=Admin, $($domainDN)" -prefix "WSA"  -Tier 2 #>
-#endregion
 #region add privleged users to privelged groups
-<# add-UsersToPrivelgedGroups -groups "tier0admins", "AD Infrastructure Engineers" -ou "OU=Accounts,OU=Tier 0,OU=Admin, $($domainDN)"
-add-UsersToPrivelgedGroups -groups "tier1admins", "Tier1 Server Maintenance" -ou "OU=Accounts,OU=Tier 1,OU=Admin, $($domainDN)"#>
 add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou $groupsOU
 #endregion
 #region populating generic groups with users
@@ -394,62 +289,15 @@ forEach ($trustTarget in $trustTargetList) {
 #region create sysvol files and folders gives random
 write-log "Creating deparment login script and assign permissions from generic groups"
 
-foreach ($group in $_new_groups) {
-    $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\" -type directory
+foreach ($group in $departmentGroups) {
+    $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group.DisplayName)\" -type directory
     write-log "Created directory $($_folderResult.FullName)" -severity SUCCESS
     $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   -severity SUCCESS
-    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\$($group)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
+    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($group.objectSID)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
-#region Import GPOs
-<# $zipFileData = Get-ChildItem "$($scriptRoot)\{*.zip" | Select-Object FullName, BaseName
-if ([string]::IsNullOrEmpty($zipFileData.FullName)) {
-    throw "Failed find zip file with GPO backup"
-
-}
-write-log "Found GPO backup ZIP file at $($zipFileData.FullName)"
-write-log "Expanding Zip file with GPO back up to $($scriptRoot)"
-Expand-Archive -Path $zipFileData.fullname -Force -DestinationPath $scriptRoot
-write-log "Expoanded zip file succesfully" -severity SUCCESS
-
-write-log "Importing GPO from backup"
-$importgpresult = import-gpo -BackupGpoName 'Server Admin GPO' -Path "$($scriptRoot)" -CreateIfNeeded -TargetName 'Server Admin GPO'
-write-log "GPO $($importgpresult.DisplayName) added with id $($importgpresult.is)" -severity SUCCESS
-$linkedGPOresult = New-GPLink -Name 'Server Admin GPO' -Target $domainDN 
-write-log "GPO $($linkedGPOresult.DisplayName) linked to $($linkedGPOresult.Target)" -severity SUCCESS #>
-#endregion
-<##region add exchange schema
-if ($domainFQDN -ne "fabrikamad.com") {
-    write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
-    exit
-}
-write-log "Updating schema on forest $($domainFQDN)"
-$forestData = Get-ADForest
-$schemaMaster = $forestData.SchemaMaster
-$configuraitionContainer = "CN=Schema,CN=Configuration,$($domainDN)"
-
-write-log "Extracting schema files"
-Expand-Archive -Path "$($scriptRoot)\schemaData.zip" -Force -DestinationPath $scriptRoot
-If (Test-Path "$($scriptRoot)\schemaData") {
-    write-log "Extrated scemafiles successfully. Startin schema update" -severity SUCCESS
-    Get-ChildItem "$($scriptRoot)\schemaData" | ForEach-Object {
-        write-log "Running schema file $($PsItem.Name)"
-        $command = "C:\windows\system32\ldifde.exe -i -s ""$($schemaMaster)"" -f ""$($PSItem.FullName)"" -j ""$($env:temp)"" -c ""<SchemaContainerDN>"" ""$($configuraitionContainer)""" 
-        $executionResult = invoke-expression $command
-        if ($executionResult -match "modified successfully") {
-            write-log $executionResult -severity SUCCESS
-        }
-        else {
-            write-log $executionResult -severity ERROR
-        }
-
-
-
-    }
-}
-#endregion#>
 #region SID history
 if ($domainFQDN -ne "fabrikamad.com") {
     write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS

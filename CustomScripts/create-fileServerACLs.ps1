@@ -91,7 +91,8 @@ write-log "Connected to domain $($domainName)"
 
 
 #region set up grouops, file extensions and ACL collections
-$businessGroups = Get-Content "$($scriptRoot)\groups.txt" 
+$groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
+$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU
 $domainLocalGroups = get-adgroup -filter 'samaccountname -like "*-local-*"'
 $MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
 $OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
@@ -102,12 +103,12 @@ $AccessControlTypeArray = @(0, 1)
 $fileSystemRightsArray = @("FullControl", "Modify", "Write", "Read", "ListDirectory", "Traverse")
 #endregion
 #region create foleders, shares, files and ACLs
-forEach ($buGroup in $businessGroups) {
-    $targetPath = "C:\File_Share\$($buGroup)\"
+forEach ($Group in $departmentGroups) {
+    $targetPath = "C:\File_Share\$($Group.DisplayName)\"
     New-Item $targetPath -type directory
     write-log "Created business directory $($targetPath)"
-    New-SMBShare -Name $buGroup -Path $targetPath -FullAccess "$($domainName)\$($bugroup)"
-    write-log "Created share $($buGroup) using path $($targetPath)"
+    New-SMBShare -Name $buGroup -Path $targetPath -FullAccess "$($domainName)\$($Group.samAccountName)"
+    write-log "Created share $($Group.DisplayName) using path $($targetPath)"
     #selecting ramdom genral groiup and assigning to the newly created folder with random permissions 
     $domainLocalGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
         $customACLParams = @{

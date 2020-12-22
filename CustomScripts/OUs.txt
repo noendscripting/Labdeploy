@@ -1,2 +1,0 @@
-OU=Security Groups,OU=Groups
-OU=Enabled Users,OU=User Accounts
