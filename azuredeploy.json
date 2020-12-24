@@ -242,10 +242,7 @@
 
       ]
     },
-    "NSGnames": [
-      "contosoNSG",
-      "fabrikamNSG"
-    ],
+    "NSGname": "contosoNSG",
     "availabilitySetname": "aclxraySet",
     "vnetSubnetName": [
       "contoso-Subnet",
@@ -280,10 +277,6 @@
     "fabrikamDNSServerIP": "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]",
     "DscConfigurationScript": "DCConfig.ps1",
     "DscConfigurationFunction": "DcConfig",
-    "ContosoDscConfigurationFunction": "DcConfig",
-    "ContosoDscConfigurationScript": "ContosoDCConfig.ps1",
-    "FabrikamDscConfigurationFunction": "DCConfig",
-    "FabrikamDscConfigurationScript": "FabrikamDCConfig.ps1",
     "CustomScriptScriptFolder": "CustomScripts",
     "CustomDCScriptScriptFileName": "create-usersGroupsACLs.ps1",
     "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1",
@@ -301,7 +294,7 @@
     // NSG Contoso
     {
       "comments": "# NSG",
-      "name": "[variables('NSGNames')[0]]",
+      "name": "[variables('NSGName')]",
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[resourceGroup().location]",
@@ -316,23 +309,10 @@
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-allow-winrm-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "5986",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1500,
               "direction": "Inbound"
             }
           },
@@ -378,74 +358,7 @@
         ]
       }
     },
-    // NSG Fabrikam
-    {
-      "comments": "# NSG",
-      "name": "[variables('NSGNames')[1]]",
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "fanrikamNSG"
-      },
-      "properties": {
-        "securityRules": [
-          {
-            "name": "default-allow-rdp-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-allow-winrm-in",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "5986",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1500,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-in-vnet-only",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1600,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-out-vnet-only",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1700,
-              "direction": "Outbound"
-            }
-          }
-
-        ]
-      }
-    },
+    
     // Availability Set
     {
       "name": "[variables('availabilitySetname')]",
@@ -540,23 +453,7 @@
         "name": "inboundNatLoop"
       }
     },
-    //Public IP LOOP
-    {
-      "name": "[variables('publicIPName')[copyIndex()]]",
-      "Type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "PublicIP-Loop"
-      },
-      "Properties": {
-        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-      },
-      "copy": {
-        "name": "PublicIPCopy",
-        "count": "[length(variables('publicIPName'))]"
-      }
-    },
+    
     //VNET Settings
     {
       "name": "[parameters('virtualNetworkName')]",
@@ -564,8 +461,8 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[1])]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
+       
       ],
       "tags": {
         "displayName": "VNET"
@@ -584,7 +481,7 @@
               "addressPrefix": "[variables('contosoSubnetIpPrefix')]"
             },
             "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]"
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
             }
           },
           {
@@ -593,7 +490,7 @@
               "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]"
             },
             "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGNames')[0])]"
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
             }
 
           }
@@ -607,7 +504,6 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "PublicIPCopy",
         "inboundNatLoop",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ],
@@ -625,9 +521,6 @@
               },
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[copyIndex()])]"
-              },
               "loadBalancerInboundNatRules": [
                 {
                   "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[copyIndex()].virtualMachineName)]"
@@ -651,7 +544,6 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "PublicIPCopy",
         "inboundNatLoop",
         "ForestBuild",
         "[concat('Microsoft.Resources/deployments/','set-VNET-DNS')]"
@@ -669,9 +561,6 @@
                 "id": "[variables('VMBuildParams').params[add(copyIndex(),2)].subnetRef]"
               },
               "privateIPAllocationMethod": "Dynamic",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[add(copyIndex(),2)])]"
-              },
               "loadBalancerInboundNatRules": [
                 {
                   "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName)]"
@@ -679,10 +568,7 @@
               ]
             }
           }
-        ] //,
-        //"dnsSettings": {
-        //  "dnsServers": [ "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]" ]
-        //}
+        ] 
 
       },
       "copy": {
