@@ -13,12 +13,16 @@
 
 .SYNOPSIS
 
-  Script deploys a test lab for AclXray including 6 VMs.
+  Script deploys a test lab for AclXray including 4 VMs.
 
 .DESCRIPTION
   
-    This will deploy a new resource group with a new VNET called ACLXRAYlabvnet with IP range 10.6.0.0/24, a new storage account and 6 Vms. The VM names are: contosodc1, contosofs1, fabrikamdc1, fabrikamfs1, eucontosodc1, eufs1
-    all resources are deployed to EASTUS
+    This will deploy a new resource group with a new VNET called ACLXRAYlabvnet with IP range 10.6.0.0/24, a new storage account 4 Vms and a Lodablancer with inbound NAT for RDP. The VM names are: contosodc1, contosofs1, fabrikamdc1, fabrikamfs1.
+    all resources are deployed to EASTUS. The extrenal port mappings for RDP access are as following:
+    contosodc1: 2400
+    contosofs1: 2401
+    fabrikamdc1: 2500
+    fabrikamfs1: 2501
 
 
 .PARAMETER   vmsize
@@ -40,15 +44,15 @@ Name of the container where uploaded artifacts are going to be stored (Default '
    The script will ask for credentials. These are the credentials for your azure subscription, not the VMs. VM creds are already set.
 
 .NOTES
-  Version:        10.0
+  Version:        11.0
   Author:         Mike Resnick Microsoft
-  Creation Date: 10/4/2020
+  Creation Date: 01/4/2020
 
  
 #This is for internal Microsoft use only
 
 #>
-#Requires -Modules ActiveDirectoryDsc,ComputerManagementDsc,PSDscResources
+#Requires -Modules ActiveDirectoryDsc,PSDscResources
 
 [CmdletBinding()]
   
@@ -56,8 +60,8 @@ Param(
   [string]$vmsize = 'Standard_B2s',
   [string]$region = 'eastus',
   [Parameter(
-  Mandatory=$true,
-  HelpMessage="Enter name of the Resource Group where lab is going to be deployed'nIf you enter existing name contents of resoucre group may be overwritten."
+    Mandatory = $true,
+    HelpMessage = "Enter name of the Resource Group where lab is going to be deployed'nIf you enter existing name contents of resoucre group may be overwritten."
   )
   ]
   [string]$RG,
@@ -69,22 +73,22 @@ Param(
 )
 
 
-if ($VerbosePreference -ne 'Continue')
-{
+if ($VerbosePreference -ne 'Continue') {
   $InformationPreference = 'Continue'
 
 }
 Write-Information "Running in non-verbose mode"
 
-$currentContext = Get-AzContext 
-if ([string]::IsNullOrEmpty($currentContext)) {
+$currentUser = (Get-AzContext).account.id.Split("@")[0] 
+if ([string]::IsNullOrEmpty($currentUser)) {
   Login-AzAccount
+  $currentUser = (Get-AzContext).account.id.Split("@")[0] 
 
 }
 
 #Region verifying deployimnet subscription
 $title = 'ACLXRAY Lab deployment'
-$message = "You are about to deploy 6 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
+$message = "You are about to deploy 4 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
 $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
 $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
 $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
@@ -111,8 +115,7 @@ switch ($resultSubscription) {
 Get-AzResourceGroup -Name $RG -ErrorAction SilentlyContinue -ErrorVariable errorData | Out-Null
 
 #verifying existing Resource Group 
-if ([string]::IsNullOrEmpty($errorData))
-{
+if ([string]::IsNullOrEmpty($errorData)) {
   $title = "ACLXRAY Lab deployment"
   $message = "You are about to deploy ACLXRAYLAB into existing Resource Group $($RG)""`nThis may overwrite existing ACLXRAYLab deployment""`nDo you want to proceed?"
   $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
@@ -135,12 +138,11 @@ else {
   Write-Host "Creating Resource Group $($RG)"
   New-AzResourceGroup -Name $RG -Location $region -Force
 }
-
+$randomprefix = get-random -Minimum 1000 -Maximum 10000000
+Write-Host "Generated random prefix $($randomprefix)"
+$dnsName = "aclxray$($currentUser.Tolower())$($randomprefix)"
 #create storage account
-
-$saprefix = get-random -Minimum 1000 -Maximum 10000000
-Write-Host "Generated random Storage Account prefix $($saprefix)"
-$storageAccountName = 'aclxray' + $saprefix
+$storageAccountName = 'aclxray' + $randomprefix
 Write-Host "Creating storage account name $($storageAccountName)"
 $storageAccount = New-AzStorageAccount -ResourceGroupName $RG -Name $storageAccountName -Location $region -type Standard_LRS
 
@@ -156,21 +158,14 @@ $artifactLocation = "$($destcontext.BlobEndPoint)$($containerName)"
 Write-Verbose "Destination SAA $($destSAStoken)"
 #endregion
 #region publishing DSC package data
-$ContosoDSConfigPath = "$($PSScriptRoot)\DSC\ContosoDCConfig.ps1"
-$FabrikamDSConfigPath = "$($PSScriptRoot)\DSC\FabrikamDCConfig.ps1"
-#$EUDSConfigPath = "$($PSScriptRoot)\DSC\EUDCConfig.ps1"
-<#Write-Host "Publishing EUDCConfig DSC package"
-$EUDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $EUDSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-$EUDSConfigFile = $EUDSConfigURI.Split("/")[-1]
-Write-Host "Succcessfully published DSC config file $($EUDSConfigFile)"#>
-Write-Host "Publishing ContosoDCConfig DSC package"
-$ContosoDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $ContosoDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-$ContosoDSConfigFile = $ContosoDSConfigURI.Split("/")[-1]
-Write-Host "Succcessfully published DSC config file $($ContosoDSConfigFile)"
-Write-Host "Publishing FabrikamDCConfig DSC package"
-$FabrikamDSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $FabrikamDSConfigPath  -StorageAccountName $storageAccountName -ContainerName $containerName -Force
-$FabrikamDSConfigFile = $FabrikamDSConfigURI.Split("/")[-1]
-Write-Host "Succcessfully published DSC config file $($FabrikamDSConfigFile)"
+
+$DSConfigPath = "$($PSScriptRoot)\DSC\DCConfig.ps1"
+
+
+Write-Host "Publishing DConfig DSC package"
+$DSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $DSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
+$DSConfigFile = $DSConfigURI.Split("/")[-1]
+Write-Host "Succcessfully published DSC config file $($DSConfigFile)"
 #endregion
 #region uplaoding custom script extension artifacts
 Write-Verbose "Artifacts location $($ArtifactLocation)"
@@ -196,8 +191,15 @@ $DeployParameters = @{
   "_artifactsLocationSasToken"      = $artifactSASTokenSecure 
   "ContosoDCConfigArchiveFileName"  = $ContosoDSConfigFile
   "FabrikamDCConfigArchiveFileName" = $FabrikamDSConfigFile
-  #"EUDSCConfigAcrhiveFileName"      = $EUDSConfigFile
+  "DCConfigArchiveFileName"         = $DSConfigFile
+  "dnsname"                         = $dnsName
+
 }
 
 
-New-AzResourceGroupDeployment @DeployParameters -Verbo
+$deployResults = New-AzResourceGroupDeployment @DeployParameters -Verbose
+
+if ($deployResults.ProvisioningState -eq "Succeeded") {
+  $rdpFQDN = $deployResults.Outputs.Values[0].Value.ToString()
+  Write-Host "ACLXRAYLAB privisoning is succeffull`nTo access servers use following addresses for eachserver`nCONTOSODC1: $($rdpFQDN):2400`nCONTOSOFS1: $($rdpFQDN):2401`nFANRIKAMDC1: $($rdpFQDN):2400`nFANRIKAMFS1: $($rdpFQDN):2501" -ForegroundColor Cyan
+}

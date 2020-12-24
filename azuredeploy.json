@@ -156,7 +156,13 @@
     },
     "FabrikamDCConfigArchiveFileName": {
       "type": "string"
-    } 
+    },
+    "DCConfigArchiveFileName": {
+      "type": "string"
+    },
+    "dnsName": {
+      "type": "string"
+    }
   },
 
   "variables": {
@@ -167,21 +173,21 @@
           "CustomIPAddress": "[variables('contosoDNSServerIP')]",
           "subnetRef": "[variables('subnetRef')[0]]",
           "vmSize": "[parameters('virtualMachineSize')]",
+          "inboundRDP": "2400",
           "sku": "2012-R2-Datacenter",
           "domainName": "contosoad.com",
           "NetBiosDomainname": "contosoad",
           "ForwarderIPaddress": "[variables('fabrikamDNSServerIP')]",
           "ForwarderDomain": "fabrikamad.com",
           "user": "[parameters('AdminUserName')]",
-          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('ContosoDCConfigArchiveFileName'))]",
-          "script": "[variables('ContosoDscConfigurationScript')]",
-          "function": "[variables('ContosoDscConfigurationFunction')]",
+          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
+          "script": "[variables('DscConfigurationScript')]",
+          "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[0], parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[3], parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]"
           ]
 
         },
@@ -190,20 +196,20 @@
           "CustomIPAddress": "[variables('fabrikamDNSServerIP')]",
           "subnetRef": "[variables('subnetRef')[1]]",
           "vmSize": "[parameters('virtualMachineSize')]",
+          "inboundRDP": "2500",
           "sku": "2012-R2-Datacenter",
           "domainName": "fabrikamad.com",
           "NetBiosDomainname": "fabrikamad",
           "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
           "ForwarderDomain": "contosoad.com",
           "user": "[parameters('AdminUserName')]",
-          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('FabrikamDCConfigArchiveFileName'))]",
-          "script": "[variables('FabrikamDscConfigurationScript')]",
-          "function": "[variables('FabrikamDscConfigurationFunction')]",
+          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
+          "script": "[variables('DscConfigurationScript')]",
+          "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[2], parameters('_artifactsLocationSasToken'))]"
-          
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomScriptScriptContent')[1], parameters('_artifactsLocationSasToken'))]"
+
 
           ]
         },
@@ -211,6 +217,7 @@
           "virtualMachineName": "contosofs1",
           "subnetRef": "[variables('subnetRef')[0]]",
           "vmSize": "[parameters('virtualMachineSize')]",
+          "inboundRDP": "2401",
           "sku": "2016-Datacenter",
           "domainName": "contosoad.com",
           "user": "[concat('contosoad\\',parameters('AdminUserName'))]",
@@ -223,6 +230,7 @@
           "virtualMachineName": "fabrikamfs1",
           "subnetRef": "[variables('subnetRef')[1]]",
           "vmSize": "[parameters('virtualMachineSize')]",
+          "inboundRDP": "2501",
           "sku": "2019-Datacenter",
           "domainName": "fabrikamad.com",
           "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]",
@@ -238,7 +246,7 @@
       "contosoNSG",
       "fabrikamNSG"
     ],
-    "availabilitySetname":"aclxraySet",
+    "availabilitySetname": "aclxraySet",
     "vnetSubnetName": [
       "contoso-Subnet",
       "fabrikam-Subnet"
@@ -260,7 +268,7 @@
       "[concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC')]",
       "[concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC')]",
       "[concat(variables('VMBuildParams').params[2].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'NIC')]" 
+      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'NIC')]"
 
     ],
     "VnetIpArray": "[split(variables('VirtualNetworkIPPrefix'),'.')]",
@@ -270,21 +278,22 @@
     "fabrikamSubnetIPArray": "[split(variables('fabrikamSubnetIpPrefix'),'.')]",
     "contosoDNSServerIP": "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
     "fabrikamDNSServerIP": "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]",
+    "DscConfigurationScript": "DCConfig.ps1",
+    "DscConfigurationFunction": "DcConfig",
     "ContosoDscConfigurationFunction": "DcConfig",
     "ContosoDscConfigurationScript": "ContosoDCConfig.ps1",
     "FabrikamDscConfigurationFunction": "DCConfig",
     "FabrikamDscConfigurationScript": "FabrikamDCConfig.ps1",
-
     "CustomScriptScriptFolder": "CustomScripts",
     "CustomDCScriptScriptFileName": "create-usersGroupsACLs.ps1",
     "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1",
     "CustomScriptScriptContent": [
       "contosoad-users.csv",
       "fabrikamad-users.csv",
-      "ou-rights.csv",
       "DSInternals_v4.4.1.zip"
-      
-    ]
+    ],
+    "loadBalancername": "aclxrayLabLB",
+    "loadBalancerPublicIpName": "aclxraylabLBPIP"
 
   },
   "resources": [
@@ -439,21 +448,98 @@
     },
     // Availability Set
     {
-  "name": "[variables('availabilitySetname')]",
-  "type": "Microsoft.Compute/availabilitySets",
-  "apiVersion": "2018-10-01",
-  "location": "[resourceGroup().location]",
-  "tags": {
-    "DisplayName": "Avaialability Set"
-  },
-  "properties": {
-    "platformUpdateDomainCount": 2,
-    "platformFaultDomainCount": 2
-  },
-  "sku": {
-    "name": "Aligned"
-  }
-},
+      "name": "[variables('availabilitySetname')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2018-10-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "DisplayName": "Avaialability Set"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 2,
+        "platformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    //Public IP for Load blancer
+    {
+      "name": "[variables('loadBalancerPublicIpName')]",
+      "Type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2020-06-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIP-LoadBalancer"
+      },
+      "Properties": {
+        "publicIpAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    },
+    // Loadbalancer for NAT
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('loadBalancername')]",
+      "location": "eastus",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
+      ],
+      "tags": {
+        "DisplayName": "LoadBalancer"
+      },
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
+              },
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "backendAddressPools": [],
+        "loadBalancingRules": [],
+        "probes": [],
+        "inboundNatRules": [
+
+        ],
+        "inboundNatPools": []
+      }
+    },
+    // Load Balancer inbound NAT Loop
+    {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "apiVersion": "2020-05-01",
+      "name": "[concat(variables('loadBalancername'), '/',variables('VMBuildParams').params[copyIndex()].virtualMachineName)]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancername'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancername')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+        },
+        "frontendPort": "[variables('VMBuildParams').params[copyIndex()].inboundRDP]",
+        "backendPort": 3389,
+        "enableFloatingIP": false,
+        "idleTimeoutInMinutes": 10,
+        "protocol": "Tcp",
+        "enableTcpReset": false
+      },
+      "copy": {
+        "count": "[length(variables('VMBuildParams').params)]",
+        "name": "inboundNatLoop"
+      }
+    },
     //Public IP LOOP
     {
       "name": "[variables('publicIPName')[copyIndex()]]",
@@ -465,7 +551,6 @@
       },
       "Properties": {
         "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
-
       },
       "copy": {
         "name": "PublicIPCopy",
@@ -523,6 +608,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "PublicIPCopy",
+        "inboundNatLoop",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ],
       "tags": {
@@ -541,7 +627,12 @@
               "privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
               "publicIpAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[copyIndex()])]"
-              }
+              },
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[copyIndex()].virtualMachineName)]"
+                }
+              ]
             }
           }
         ]
@@ -561,6 +652,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "PublicIPCopy",
+        "inboundNatLoop",
         "ForestBuild",
         "[concat('Microsoft.Resources/deployments/','set-VNET-DNS')]"
       ],
@@ -579,10 +671,15 @@
               "privateIPAllocationMethod": "Dynamic",
               "publicIpAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName')[add(copyIndex(),2)])]"
-              }
+              },
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName)]"
+                }
+              ]
             }
           }
-        ]//,
+        ] //,
         //"dnsSettings": {
         //  "dnsServers": [ "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]" ]
         //}
@@ -601,14 +698,14 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[0])]",
-         "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
       ],
       "tags": {
         "displayName": "CONTOSOAD-DC"
       },
       "properties": {
         "availabilitySet": {
-          "id":"[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[0].virtualMachineName]",
@@ -709,15 +806,15 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
         "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]",
-         "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
 
       ],
       "tags": {
         "displayName": "FABRIKAMAD-DC"
       },
       "properties": {
-         "availabilitySet": {
-          "id":"[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[1].virtualMachineName]",
@@ -820,14 +917,14 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),2)])]",
         "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
-        
+
       ],
       "tags": {
         "displayName": "File Server Loop"
       },
       "properties": {
-         "availabilitySet": {
-          "id":"[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName]",
@@ -960,8 +1057,7 @@
         "typeHandlerVersion": "1.4",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris":
-            "[variables('VMBuildParams').params[copyIndex()].CustomScriptURis]"
+          "fileUris": "[variables('VMBuildParams').params[copyIndex()].CustomScriptURis]"
         },
         "protectedSettings": {
           "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
@@ -1060,6 +1156,10 @@
     }
   ],
   "outputs": {
+    "rdpDNS": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('loadBalancerPublicIpName'))).dnsSettings.fqdn]"
+    }
 
   }
 }

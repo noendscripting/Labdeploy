@@ -29,7 +29,7 @@ function write-log {
         "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
-    Write-Host "$($timeStamp)`t[$($severity)]`$($message)" -ForegroundColor $messageColor
+    Write-Host "$($timeStamp)`t[$($severity)]`t$($message)" -ForegroundColor $messageColor
     if (!([string]::IsNullOrEmpty($logfile))) {
         write-output "$($timeStamp)`t[$($severity)]`t$($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
@@ -68,11 +68,11 @@ Function Add-UsersToPrivelgedGroups {
 function Set-OuDelegation {
     param(
         [string]$group,
-        [string]$csvRightsList,
+        [string]$jsRightsObject,
         [string]$targetOU
     ) 
     
-    $importedPermissions = Import-Csv $csvRightsList
+    $importedPermissions = $jsRightsObject | convertFrom-json
     $groupProperties = Get-ADGroup $group
     ForEach ($importedPermission in $importedPermissions) {
         $rightsObject = New-Object System.DirectoryServices.ActiveDirectoryAccessRule([System.Security.Principal.SecurityIdentifier]$groupProperties.SID, $importedPermission.ActiveDirectoryRights, $importedPermission.AccessControlType, [GUID]$importedPermission.ObjectType, $importedPermission.InheritanceType, [GUID]$importedPermission.InheritedObjectType)
@@ -141,7 +141,7 @@ write-log "Setting TLS negotiation porperties for .Net 4.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 write-log "Setting TLS negotiation porperties for .Net 2.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
-#region set up domain data
+#endregion
 #region setting local domain variables
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = Get-ADDomain
@@ -149,6 +149,45 @@ $domainDN = $domainData.distinguishedname
 $domainName = $domainData.NetbiosName
 $domainFQDN = $domainData.DNSRoot
 $companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
+#endregion
+#region creating json with OU delegation details
+$jsonDelegationDetails = @"
+[
+  {
+    "ActiveDirectoryRights": "GenericAll",
+    "InheritanceType": "Descendents",
+    "ObjectType": "00000000-0000-0000-0000-000000000000",
+    "InheritedObjectType": "bf967aba-0de6-11d0-a285-00aa003049e2",
+    "ObjectFlags": "InheritedObjectAceTypePresent",
+    "AccessControlType": "Allow",
+    "IsInherited": "False",
+    "InheritanceFlags": "ContainerInherit",
+    "PropagationFlags": "InheritOnly"
+  },
+  {
+    "ActiveDirectoryRights": "ReadProperty, WriteProperty",
+    "InheritanceType": "All",
+    "ObjectType": "f30e3bbf-9ff0-11d1-b603-0000f80367c1",
+    "InheritedObjectType": "00000000-0000-0000-0000-000000000000",
+    "ObjectFlags": "ObjectAceTypePresent",
+    "AccessControlType": "Allow",
+    "IsInherited": "False",
+    "InheritanceFlags": "ContainerInherit",
+    "PropagationFlags": "None"
+  },
+  {
+    "ActiveDirectoryRights": "CreateChild, DeleteChild",
+    "InheritanceType": "All",
+    "ObjectType": "bf967a9c-0de6-11d0-a285-00aa003049e2",
+    "InheritedObjectType": "00000000-0000-0000-0000-000000000000",
+    "ObjectFlags": "ObjectAceTypePresent",
+    "AccessControlType": "Allow",
+    "IsInherited": "False",
+    "InheritanceFlags": "ContainerInherit",
+    "PropagationFlags": "None"
+  }
+]
+"@
 #endregion
 #region adding users
 $usersOU = "OU=Enabled Users,OU=User Accounts, $($domainDN)"
@@ -185,7 +224,7 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
 #region getting deparmnet groups
 write-log "Creating deparatment groups"
 $groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
-$departmentGroups = get-adgroup -filter * -SearchBase $groupOU
+$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU
 #endregion
 #region creating priveleged groups
 write-log "Creating privilged groups"
@@ -194,7 +233,7 @@ New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -D
 #endregion
 #region Adding OU delegations
 write-log "Setting up delegations in OUs"
-Set-OuDelegation -group "Service Desk Operators" -csvRightsList "$($scriptRoot)\ou-rights.csv" -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)" 
+Set-OuDelegation -group "Service Desk Operators" -jsRightsObject $jsonDelegationDetails -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)" 
 #endregion
 #region creating random local groups
 write-log "Creating random local groups"
@@ -215,14 +254,14 @@ write-log "Creating random universal groups"
 #region populatuing departmnent groups with users and adding departmnet value to the user properties
 get-aduser -filter * -SearchBase $usersOU | ForEach-Object {
     $departmentGroup = $departmentGroups | get-random
-    $_ | Set-ADUser  -department $departmentGroup.DisplayName
-    Add-ADGroupMember -members $_ -Identity $departmentGroup.objectSID
-    write-log "Added user $($_) to Depratmnet group $($departmentGroup.DisplayName)" -severity SUCCESS
+    $_ | Set-ADUser  -department $departmentGroup.Name
+    Add-ADGroupMember -members $_ -Identity $departmentGroup.SID
+    write-log "Added user $($_) to Depratmnet group $($departmentGroup.Name)" -severity SUCCESS
 }
 #endregion
 #region create manager\report entries for each department
 write-log "Adding Managers and their reports"
-$_new_groups | ForEach-Object { $gname = $_
+$departmentGroups.Name | ForEach-Object { $gname = $_
     $Manager = get-adgroupmember $gname  | get-random | get-aduser 
     $Manager | Set-ADUser  -Title "Manager"
     get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
@@ -275,7 +314,10 @@ forEach ($trustTarget in $trustTargetList) {
         write-log "Getting list of groups from $($trustTarget) domain. Attempt number $($i)" 
         $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
         $i++
-        start-sleep -Seconds 60
+        if (!($foreignGroups.count -gt 0))
+        {
+            start-sleep -Seconds 60
+        }
     } until ($foreignGroups.count -gt 0 -or $i -eq 21)
     if ($foreignGroups.count -eq 0) {
         throw "Unable to get a list of groups from $($trustTarget) domain"
@@ -290,16 +332,16 @@ forEach ($trustTarget in $trustTargetList) {
 write-log "Creating deparment login script and assign permissions from generic groups"
 
 foreach ($group in $departmentGroups) {
-    $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group.DisplayName)\" -type directory
+    $_folderResult = New-Item "C:\Windows\sysvol\domain\scripts\$($group.Name)\" -type directory
     write-log "Created directory $($_folderResult.FullName)" -severity SUCCESS
-    $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group)\logon.bat" -type file
+    $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group.Name)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   -severity SUCCESS
-    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($group.objectSID)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
+    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\$($group.Name)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
 #region SID history
-if ($domainFQDN -ne "fabrikamad.com") {
+if ($domainFQDN -eq "fabrikamad.com") {
     write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
     exit
 }

@@ -15,8 +15,7 @@ Configuration DcConfig
 
 	)
 
-	Import-DscResource -ModuleName PSDscResources 
-	Import-DscResource -ModuleName ComputerManagementDsc
+	Import-DscResource -ModuleName PSDscResources
 	Import-DscResource -ModuleName ActiveDirectoryDsc
 
 	$groupList = @(
@@ -53,11 +52,6 @@ Configuration DcConfig
 			RebootNodeIfNeeded   = $true
 			ActionAfterReboot    = 'ContinueConfiguration'
 			AllowModuleOverwrite = $true
-		}
-		TimeZone TimeZoneExample {
-			isSingleInstance = 'Yes'
-			TimeZone         = $TimeZone
-
 		}
 		WindowsFeatureSet ADDS_Features
 		{

@@ -21,7 +21,7 @@ function write-log {
         "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
-    Write-Host "$($timeStamp)`t[$($severity)]`$($message)" -ForegroundColor $messageColor
+    Write-Host "$($timeStamp)`t[$($severity)]`t$($message)" -ForegroundColor $messageColor
     if (!([string]::IsNullOrEmpty($logfile))) {
         write-output "$($timeStamp)`t[$($severity)]`t$($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
@@ -83,9 +83,10 @@ write-log "Setting TLS negotiation porperties for .Net 2.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
-$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
+#$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
 $domainName = $domainData.NetbiosName
+$domainDN = $domainData.distinguishedname
 write-log "Connected to domain $($domainName)"
 #endregion#>
 
@@ -107,8 +108,8 @@ forEach ($Group in $departmentGroups) {
     $targetPath = "C:\File_Share\$($Group.DisplayName)\"
     New-Item $targetPath -type directory
     write-log "Created business directory $($targetPath)"
-    New-SMBShare -Name $buGroup -Path $targetPath -FullAccess "$($domainName)\$($Group.samAccountName)"
-    write-log "Created share $($Group.DisplayName) using path $($targetPath)"
+    New-SMBShare -Name $Group.Name -Path $targetPath -FullAccess "$($domainName)\$($Group.samAccountName)"
+    write-log "Created share $($Group.Name) using path $($targetPath)"
     #selecting ramdom genral groiup and assigning to the newly created folder with random permissions 
     $domainLocalGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
         $customACLParams = @{
