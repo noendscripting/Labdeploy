@@ -72,9 +72,9 @@ In this example we will deploy ACLXRAY Lab into aletrnative region with aleterna
 ./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
 '''
 
-## Accesing Lab
+## Accessing Lab
 
-Due to security concenrns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadblancer with NAT trasnlation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadblancerwill have random;y asisgned DNS name which cna be used to access VMs via RDP. There are two main ways to access servers via RDP
+Due to security concerns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadblancer with NAT translation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadblancer will have randomly assigned DNS name which can be used to access VMs via RDP. There are two main ways to access servers via RDP
 
 ### Using aclxray script output
 
@@ -82,4 +82,4 @@ After script is finished running FQDN and ports for each VM will be printed in t
 
 ### Using RDP connection script
 
-In the terminal window, login to Azure and select subscripotion where your lab is running, navigate to SupportFile folder and execute "connect-aclxraylabServers.ps1" script. Script will guide you through the nessesary steps and will open RDP window for you.
+In the terminal window, login to Azure and select subscription where your lab is running, navigate to SupportFile folder and execute "connect-aclxraylabServers.ps1" script. Script will guide you through the necessary steps and will open RDP window for you.
