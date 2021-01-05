@@ -151,12 +151,6 @@
         "description": "Auto-generated token to access _artifactsLocation"
       }
     },
-    "ContosoDCConfigArchiveFileName": {
-      "type": "string"
-    },
-    "FabrikamDCConfigArchiveFileName": {
-      "type": "string"
-    },
     "DCConfigArchiveFileName": {
       "type": "string"
     },
@@ -242,7 +236,7 @@
 
       ]
     },
-    "NSGname": "contosoNSG",
+    "NSGname": "ACLXRAY-NSG",
     "availabilitySetname": "aclxraySet",
     "vnetSubnetName": [
       "contoso-Subnet",
@@ -299,7 +293,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "contosoNSG"
+        "displayName": "ACLXRAY-NSG"
       },
       "properties": {
         "securityRules": [

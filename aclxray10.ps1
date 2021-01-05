@@ -189,8 +189,6 @@ $DeployParameters = @{
   "shutDownTime"                    = $shutDownTime
   "_artifactsLocation"              = $ArtifactLocation
   "_artifactsLocationSasToken"      = $artifactSASTokenSecure 
-  "ContosoDCConfigArchiveFileName"  = $ContosoDSConfigFile
-  "FabrikamDCConfigArchiveFileName" = $FabrikamDSConfigFile
   "DCConfigArchiveFileName"         = $DSConfigFile
   "dnsname"                         = $dnsName
 

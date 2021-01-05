@@ -10,15 +10,16 @@ The deployment will create:
 * 2 Subnets
 * 2 Network Security Groups
 * Storage Account
-* 6 VM
+* 4 VM
 * Shutdown schedule for each VM to save costs
-* Public IP addresses for all VMs
-* Two forests one single domain and one subdomain
-* File server attached to each domain
+* Azure Loadblancer with NAT tranlation for RDP
+* Public IP addresses for Load Balancer
+* Two forests
+* File server attached to each forest
 * Users in each forest
 * Randomly generated groups with random memberships
 * Random ACLs on OUs and files  
-* Four accounts with SIM history entries
+* Four accounts with SID history entries
 
 > :warning: **WARNING**: Because all groups and ACLs are created randomly, if you delete and re-deploy lab you will have diffirent settings. SupportFiles folder has two scripts that can help with creating disk snapshots of each VM and then creating a new lab VMs from snapshot if you want to roll back changes. Scripts are provided as is
 
@@ -35,8 +36,6 @@ The deployment will create:
   * Az
   * PSDscResources
   * ActiveDirectoryDsc
-  * ComputerManagementDsc
-  * StorageDsc
 * [VSCode editor](https://code.visualstudio.com/)(optional)
 
 ### Prepare to deploy
@@ -71,4 +70,16 @@ In this example we will deploy ACLXRAY Lab into aletrnative region with aleterna
 =======
 '''pwsh
 ./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
-```
+'''
+
+## Accesing Lab
+
+Due to security concenrns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadblancer with NAT trasnlation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadblancerwill have random;y asisgned DNS name which cna be used to access VMs via RDP. There are two main ways to access servers via RDP
+
+### Using aclxray script output
+
+After script is finished running FQDN and ports for each VM will be printed in the terminal window. Copy and save these entries and use them with RDP client
+
+### Using RDP connection script
+
+In the terminal window, login to Azure and select subscripotion where your lab is running, navigate to SupportFile folder and execute "connect-aclxraylabServers.ps1" script. Script will guide you through the nessesary steps and will open RDP window for you.
