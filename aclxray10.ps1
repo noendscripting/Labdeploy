@@ -18,7 +18,7 @@
 .DESCRIPTION
   
     This will deploy a new resource group with a new VNET called ACLXRAYlabvnet with IP range 10.6.0.0/24, a new storage account 4 Vms and a Lodablancer with inbound NAT for RDP. The VM names are: contosodc1, contosofs1, fabrikamdc1, fabrikamfs1.
-    all resources are deployed to EASTUS. The extrenal port mappings for RDP access are as following:
+    all resources are deployed to EASTUS. Script will attempt to identify your public IP address to configure Network Security Group for RDP access. The extrenal port mappings for RDP access are as following:
     contosodc1: 2400
     contosofs1: 2401
     fabrikamdc1: 2500
@@ -85,7 +85,19 @@ if ([string]::IsNullOrEmpty($currentUser)) {
   $currentUser = (Get-AzContext).account.id.Split("@")[0] 
 
 }
-
+#region Public IP address
+Write-Host "Identifying your current public IP address"
+$currentPublicIP = (Invoke-WebRequest https://api.ipify.org -ErrorAction SilentlyContinue -ErrorVariable errorData ).Content
+if (![string]::IsNullOrEmpty($errorData)) {
+  Write-Warning "Unable to find your public IP address. Please verify your external IP and enter at the prompt below"
+  $currentPublicIP = Read-Host "Please enter your public IP address"
+  if ([string]::IsNullOrEmpty($currentPublicIP)) {
+    Write-Error "Public IP address empty, can not continue. Terminating script"
+    exit
+  }
+}
+Write-Host "Your current public IP address is: $($currentPublicIP)"
+#endregion
 #Region verifying deployimnet subscription
 $title = 'ACLXRAY Lab deployment'
 $message = "You are about to deploy 4 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
@@ -180,17 +192,18 @@ $templatefile = '.\azuredeploy.json'
 
 
 $DeployParameters = @{
-  "Name"                            = "ACLXRALAB_$(get-date -UFormat %Y_%m_%d-%I-%M-%S%p)"
-  "ResourceGroupName"               = $RG
-  "TemplateFile"                    = $templatefile
-  "virtualMachineSize"              = $vmsize
-  "virtualNetworkName"              = $vnetname
-  "shutdownTimeZone"                = $shutdownTimeZone
-  "shutDownTime"                    = $shutDownTime
-  "_artifactsLocation"              = $ArtifactLocation
-  "_artifactsLocationSasToken"      = $artifactSASTokenSecure 
-  "DCConfigArchiveFileName"         = $DSConfigFile
-  "dnsname"                         = $dnsName
+  "Name"                       = "ACLXRALAB_$(get-date -UFormat %Y_%m_%d-%I-%M-%S%p)"
+  "ResourceGroupName"          = $RG
+  "TemplateFile"               = $templatefile
+  "virtualMachineSize"         = $vmsize
+  "virtualNetworkName"         = $vnetname
+  "shutdownTimeZone"           = $shutdownTimeZone
+  "shutDownTime"               = $shutDownTime
+  "_artifactsLocation"         = $ArtifactLocation
+  "_artifactsLocationSasToken" = $artifactSASTokenSecure 
+  "DCConfigArchiveFileName"    = $DSConfigFile
+  "dnsname"                    = $dnsName
+  "currentPublicIp"            = $currentPublicIP
 
 }
 

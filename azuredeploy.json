@@ -15,13 +15,12 @@
       "type": "string",
       "defaultValue": "VNET02"
     },
+    "currentPublicIP": {
+      "type": "string"
+    },
     "adminPassword": {
       "type": "securestring",
-      "defaultValue": "Microsoftie99999"
-    },
-    "publicIpAddressType": {
-      "type": "string",
-      "defaultValue": "Dynamic"
+      "defaultValue": "Lab@XRay#11"
     },
     "shutDownTime": {
       "type": "string",
@@ -138,7 +137,6 @@
         "Line Islands Standard Time"
       ]
     },
-
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -191,7 +189,7 @@
           "subnetRef": "[variables('subnetRef')[1]]",
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2500",
-          "sku": "2012-R2-Datacenter",
+          "sku": "2016-Datacenter",
           "domainName": "fabrikamad.com",
           "NetBiosDomainname": "fabrikamad",
           "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
@@ -298,55 +296,16 @@
       "properties": {
         "securityRules": [
           {
-            "name": "default-allow-rdp-in",
+            "name": "allow-rdp-in",
             "properties": {
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3389",
-              "sourceAddressPrefix": "AzureLoadBalancer",
-              "destinationAddressPrefix": "*",
+              "sourceAddressPrefix": "[parameters('currentPublicIP')]",
+              "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 1000,
               "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-in-vnet-only",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1600,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "allow-out-vnet-only",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 1700,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "allow-out-443-internet",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "destinationAddressPrefix": "Internet",
-              "access": "Allow",
-              "priority": 1800,
-              "direction": "Outbound"
             }
           }
         ]

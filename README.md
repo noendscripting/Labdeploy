@@ -36,6 +36,7 @@ The deployment will create:
   * Az
   * PSDscResources
   * ActiveDirectoryDsc
+* Access to https://api.ipify.org to verify your public IP address or a way to obtain your public IP manually
 * [VSCode editor](https://code.visualstudio.com/)(optional)
 
 ### Prepare to deploy
@@ -75,6 +76,7 @@ In this example we will deploy ACLXRAY Lab into aletrnative region with aleterna
 ## Accessing Lab
 
 Due to security concerns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadblancer with NAT translation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadblancer will have randomly assigned DNS name which can be used to access VMs via RDP. There are two main ways to access servers via RDP
+RDP access is protected by Network Security Group ACLXRAY-NSG . NSG rule will allow RDP access from your public IP address (collected at the time deployment sripts runs). If your public IP changes you will need to update NSG rule manually.
 
 ### Using aclxray script output
 

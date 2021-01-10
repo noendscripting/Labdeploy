@@ -66,20 +66,29 @@ Configuration DcConfig
 			DependsOn                     = '[WindowsFeatureSet]ADDS_Features'
 		}
 
+		WaitForADDomain LocalForestWait {
+			DomainName              = $DomainName
+			DependsOn               =  '[ADDomain]CreateForest'
+			WaitTimeout             = 3600
+			WaitForValidCredentials = $true
+			Credential              = $DomainAdminCredentials
+			RestartCount            = 5 
+            
+		}
 		#create user OUs
-		ADOrganizationalUnit UserAccuntsOU
+		ADOrganizationalUnit UserAccountsOU
 		{
 			Name="User Accounts"
 			Path="dc=$($NetBiosDomainname),dc=com"
 			Ensure = "Present"
-			DependsOn =   '[ADDomain]CreateForest'
+			DependsOn = '[WaitForADDomain]LocalForestWait'
 		}
 		ADOrganizationalUnit EnabledUsersOU
 		{
 			Name="Enabled Users"
 			Path="OU=User Accounts,dc=$($NetBiosDomainname),dc=com"
 			Ensure = "Present"
-			DependsOn =   '[ADOrganizationalUnit]UserAccuntsOU'
+			DependsOn =   '[ADOrganizationalUnit]UserAccountsOU'
 		}
 
 		#create Group OUs
@@ -88,7 +97,7 @@ Configuration DcConfig
 			Name="Groups"
 			Path="dc=$($NetBiosDomainname),dc=com"
 			Ensure = "Present"
-			DependsOn =   '[ADDomain]CreateForest'
+			DependsOn =   '[WaitForADDomain]LocalForestWait'
 		}
 		ADOrganizationalUnit SecurityGroupsOU
 		{
@@ -140,9 +149,9 @@ Configuration DcConfig
 				Add-DnsServerConditionalForwarderZone -MasterServers $using:ForwarderIPaddress -Name $using:ForwarderDomain
 		  
 			}
-			Dependson  = '[ADDomain]CreateForest'
+			Dependson  = '[WaitForADDomain]LocalForestWait'
 		}
-		WaitForADDomain DscForestWait {
+		WaitForADDomain RemoteForestWait {
 			DomainName              = $ForwarderDomain
 			DependsOn               = '[Script]SetForwarders'
 			WaitTimeout             = 3600
@@ -158,7 +167,7 @@ Configuration DcConfig
 			TargetCredential     = $DomainAdminCredentials
 			TrustType            = "Forest"
 			TrustDirection       = "Outbound"
-			Dependson            = '[WaitForADDomain]DscForestWait'
+			Dependson            = '[WaitForADDomain]RemoteForestWait'
 			AllowTrustRecreation = $true
 		}
 		
