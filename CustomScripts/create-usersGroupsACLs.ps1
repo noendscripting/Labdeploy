@@ -61,7 +61,7 @@ Function Add-UsersToPrivelgedGroups {
     forEach ($group in $groups) {
         get-aduser -filter * -searchbase $ou | Get-Random -Count 3 | ForEach-Object {
             get-adgroup $group | Add-ADGroupMember -members $PSItem
-            write-log "Added $($PSItem.samAccountName) to $($group)" -severity SUCCESS
+            write-log "Added $($PSItem.name) to $($group)" -severity SUCCESS
         }
     }
 }
@@ -102,21 +102,6 @@ function set-CustomACLs {
     write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)" -severity SUCCESS
 
 }
-function add-GroupMemberships {
-    param (
-        $groups,
-        $members,
-        $radomFactor
-    )
-    $members | ForEach-Object {
-        for ($i = 1; $i -le $radomFactor; $i++) {
-            $addResult = Add-ADGroupMember -Identity $($Groups | get-random) -Members $PSItem -PassThru
-            write-log "Added $($PSItem.samAccountName) to group $($addResult.samAccountName)" -severity SUCCESS
-        }
-    }
-
-
-}
 #region logging parameters
 $PSDefaultParameterValues = @{
 
@@ -142,16 +127,12 @@ New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name
 write-log "Setting TLS negotiation porperties for .Net 2.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
 #endregion
-#region set windows firewall settings for logging
-Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
-#endregion
 #region setting local domain variables
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = Get-ADDomain
 $domainDN = $domainData.distinguishedname
 $domainName = $domainData.NetbiosName
 $domainFQDN = $domainData.DNSRoot
-$companyName = (Import-csv "$($scriptRoot)\$($domainName)-users.csv" | Select-Object Company -Unique ).Company
 #endregion
 #region creating json with OU delegation details
 $jsonDelegationDetails = @"
@@ -202,7 +183,8 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
 
         Name              = $name
         City              = $user.city
-        Company           = $companyName
+        Company           = $user.Company
+        Department        = $user.Department
         Country           = $user.Country
         EmailAddress      = $user.email
         GivenName         = $user.first
@@ -224,100 +206,74 @@ foreach ($user in (import-csv "$scriptRoot\$($domainName)-users.csv")) {
     Clear-Variable name
 }
 #endregion
-#region creating department groups
-write-log "Getting list of deparatment groups"
+#region creating groups
+write-log "Creating groups"
 $groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
-$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU
-#endregion
-#region creating priveleged groups
-write-log "Creating privilged groups"
-New-ADGroup "tier2admins" -SamAccountName "tier2admins" -DisplayName "tier2admins" -GroupScope Global -GroupCategory Security -Path $groupsOU
-New-ADGroup "Service Desk Operators" -SamAccountName "Service Desk Operators" -DisplayName "Service Desk Operators" -GroupScope Global -GroupCategory Security -Path $groupsOU
+$groupData = import-csv "$scriptRoot\$($domainName)-groups.csv"
+
+
+foreach ($group in $groupData) {
+    New-ADGroup $group.GroupName -SamAccountName $group.GroupName -DisplayName $group.GroupName -GroupScope $group.Type -GroupCategory Security -Path $groupsOU
+    write-log "Created $($group.Type) group $($group.GroupName)" -severity SUCCESS
+}
+write-log "Getting list of created groups"
+$groups = get-adgroup -filter * -SearchBase $groupsOU
+write-log "Getting list of department groups"
+$departmentGroups = $groups | Where-Object { $_.SamAccountName -notlike 'grp-*' }
 #endregion
 #region Adding OU delegations
 write-log "Setting up delegations in OUs"
 Set-OuDelegation -group "Service Desk Operators" -jsRightsObject $jsonDelegationDetails -targetOU "OU=Enabled Users,OU=User Accounts, $($domainDN)" 
 #endregion
-#region creating random local groups
-write-log "Creating random local groups"
-1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
-    $groupNameLocal = "grp-$($companyName)-local-$($psitem)"
-    New-ADGroup $groupNameLocal -SamAccountName $groupNameLocal -DisplayName $groupNameLocal -GroupScope DomainLocal -GroupCategory Security -Path $groupsOU
-    write-log "Created local group $($groupNameLocal)" -severity SUCCESS
-}
-#endregion
-#region creating random universal groups
-write-log "Creating random universal groups"
-1..(Get-Random -Minimum 1 -Maximum 40) | ForEach-Object {
-    $groupNameUniversal = "grp-$($companyName)-universal-$($psitem)"
-    New-ADGroup $groupNameUniversal -SamAccountName $groupNameUniversal -DisplayName $groupNameUniversal -GroupScope Universal -GroupCategory Security -Path $groupsOU
-    write-log "Created general group $($groupNameUniversal)" -severity SUCCESS
-}
-#endregion
-#region populatuing departmnent groups with users and adding departmnet value to the user properties
-get-aduser -filter * -SearchBase $usersOU | ForEach-Object {
-    $departmentGroup = $departmentGroups | get-random
-    $_ | Set-ADUser  -department $departmentGroup.Name
-    Add-ADGroupMember -members $_ -Identity $departmentGroup.SID
-    write-log "Added user $($_.samaccountname) to Depratmnet group $($departmentGroup.samaccountname)" -severity SUCCESS
+#region Adding members to groups
+write-log "Assigning Group Membership"
+$memberData = Import-Csv "$scriptRoot\$($domainName)-groups-members.csv" | group -AsHashTable -Property Group
+forEach ($groupName in $memberData.Keys) {
+    $memberArray = $memberData.$groupName.Member
+    Add-ADGroupMember -Identity $groupName -Members $memberArray
+    write-log "Added $($memberArray) to group $($groupName)" -severity SUCCESS 
 }
 #endregion
 #region create manager\report entries for each department
 write-log "Adding Managers and their reports"
-$departmentGroups.Name | ForEach-Object { $gname = $_
+$departmentGroups.Name | ForEach-Object { $gname = $PsItem
     $Manager = get-adgroupmember $gname  | get-random | get-aduser 
     $Manager | Set-ADUser  -Title "Manager"
     get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
-    write-log "Added $($manager.samAccountName) as Manager to members of group $($gname)" -severity SUCCESS
+    write-log "Added $($manager.Name) as Manager to members of group $($gname)" -severity SUCCESS
 }
-#endregion
-#region add privleged users to privelged groups
-add-UsersToPrivelgedGroups -groups "tier2admins", "Service Desk Operators" -ou $groupsOU
-#endregion
-#region populating generic groups with users
-write-log "Adding random users to Universal and Local groups"
-$allGenericGroups = (get-adgroup -filter 'samaccountname -like "grp-*"')
-$allUsers = get-aduser -filter * -searchbase $usersOU 
-$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
-add-GroupMemberships -groups $allGenericGroups -members $allUsers -radomFactor $_groupRandomcount
-Clear-Variable _groupRandomcount
-#endregion
-#region populating Universal groups with other Universal groups
-write-log "Nesting random generic groups inside each other"
-$universallGroups = get-adgroup -filter 'samaccountname -like "*Universal*"'
-$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
-add-GroupMemberships -groups $universallGroups -members $universallGroups -radomFactor $_groupRandomcount
-Clear-Variable _groupRandomcount
-#endregion
-#region populating domain local groups with Universal groups
-write-log "Nesting random Univresal groups inside  local groups"
-$localGroups = get-adgroup -filter 'samaccountname -like "*local*"'
-$_groupRandomcount = Get-Random -Minimum 1 -Maximum 10
-add-GroupMemberships -groups $localGroups -members $universallGroups -randomFactor $_groupRandomcount
-Clear-Variable _groupRandomcount
 #endregion
 #region Add external Universal Groups to domain local groups
 $trustTargetList = (Get-ADTrust -Filter * -Properties Target).Target
 forEach ($trustTarget in $trustTargetList) {
     $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
-    write-log "Getting list of groups from $($trustTarget) domain" 
     $i = 1
     Do {
-        write-log "Getting list of groups from $($trustTarget) domain. Attempt number $($i)" 
-        $foreignGroups = Get-ADGroup -Filter 'name -like "*universal*"' -Server $trustTarget -Credential $remoteCredentials | Get-Random -Count (Get-Random -Minimum 5 -Maximum 25)
+        write-log "Verifying domain is online $($trustTarget) domain. Attempt number $($i)" 
+        $domaindata = Get-ADDomain -Server $trustTarget -Credential $remoteCredentials 
         $i++
-        if (!($foreignGroups.count -gt 0))
-        {
+        if (!($domaindata)) {
             start-sleep -Seconds 60
         }
-    } until ($foreignGroups.count -gt 0 -or $i -eq 21)
-    if ($foreignGroups.count -eq 0) {
+    } until ($domaindata -or $i -eq 21)
+    if (!($domaindata)) {
         throw "Unable to get a list of groups from $($trustTarget) domain"
         exit
     }
-    write-log "Obtained $($foreignGroups.count) from $($trustTarget)"
-    $_groupRandomcount = Get-Random -Minimum 2 -Maximum 10
-    add-GroupMemberships -radomFactor $_groupRandomcount -members $foreignGroups -groups $localGroups
+    write-log "Confirmed domain $($trustTarget) is available" -severity SUCCESS
+
+    write-log "Processing foreign pricipal membership data from file"
+    $fpMemberData = Import-Csv "$scriptRoot\$($domainName)-fp-groups.csv" | group -AsHashTable -Property Member
+    forEach ($fpGroupName in $fpMemberData.Keys) {
+        $LocalGroupArray = $fpMemberData.$fpGroupName.Group
+        $fpGroupData = Get-ADGroup -Identity $fpGroupName -Server $trustTarget -Credential $remoteCredentials
+        foreach ($localGroup in $LocalGroupArray) {
+            Add-ADGroupMember -Identity $localGroup -Members $fpGroupData
+            write-log "Added $($fpGroupData.name) to group $($localGroup)" -severity SUCCESS 
+        }
+    }
+    Clear-Variable fpGroupData
+
 }
 #endregion
 #region create sysvol files and folders gives random
@@ -328,7 +284,7 @@ foreach ($group in $departmentGroups) {
     write-log "Created directory $($_folderResult.FullName)" -severity SUCCESS
     $_fileREsult = New-Item "C:\Windows\sysvol\domain\scripts\$($group.Name)\logon.bat" -type file
     write-log "Created file $($_fileREsult.FullName)"   -severity SUCCESS
-    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\$($group.Name)" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
+    set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\$($group.SamAccountName)" -FileSystemRights Modify -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
     set-CustomACLs -TargetPath $_folderResult.FullName -IdenitylRefrence "$($domainName)\Service Desk Operators" -FileSystemRights FullControl -InheritanceFlags ObjectInherit -PropagationFlags InheritOnly -AccessControlType Allow
 }
 #endregion
@@ -350,7 +306,7 @@ else {
 
 foreach ($trustTarget in $trustTargetList) {
 
-    $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
+    $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTarget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
     $sidHistoryDB = @()
     get-aduser -Filter 'GivenName -eq "Amari" -or GivenName -eq "Jaden" -or GivenName -eq "Jaylin" -or GivenName -eq "Jadyn"' -Properties SID, GivenName -Server $trustTarget -Credential $remoteCredentials | ForEach-Object {
         $givenName = $psItem.GivenName
