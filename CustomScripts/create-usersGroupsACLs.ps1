@@ -1,4 +1,5 @@
-﻿[CmdletBinding()]
+﻿
+[CmdletBinding()]
 
 param(
     [Parameter(Position = 0, Mandatory = $true)]
@@ -236,11 +237,11 @@ forEach ($groupName in $memberData.Keys) {
 #endregion
 #region create manager\report entries for each department
 write-log "Adding Managers and their reports"
-$departmentGroups.Name | ForEach-Object { $gname = $PsItem
-    $Manager = get-adgroupmember $gname  | get-random | get-aduser 
-    $Manager | Set-ADUser  -Title "Manager"
-    get-adgroupmember $gname | Where-Object samaccountname -ne $manager.samaccountname | get-aduser | set-aduser -manager $($manager.distinguishedname) -department $gname
-    write-log "Added $($manager.Name) as Manager to members of group $($gname)" -severity SUCCESS
+$managerData = Import-Csv "$scriptRoot\$($domainName)-managers.csv"
+foreach ($managerEntry in $managerData) {
+    set-aduser $managerEntry.manager -Title "Manager"
+    get-adgroupmember $managerEntry.Group | Where-Object samaccountname -ne $managerEntry.manager | get-aduser | set-aduser -manager $($managerEntry.manager) -department $managerEntry.Group
+    write-log "Added $($managerEntry.manager) as Manager to members of group $($managerEntry.Group)" -severity SUCCESS
 }
 #endregion
 #region Add external Universal Groups to domain local groups

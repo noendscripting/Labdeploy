@@ -91,19 +91,13 @@ $domainDN = $domainData.distinguishedname
 write-log "Connected to domain $($domainName)"
 #endregion#>
 
-#region Set .Net to use TLS settings from OS
-write-log "Setting TLS negotiation porperties for .Net 4.x"
-New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
-write-log "Setting TLS negotiation porperties for .Net 2.x"
-New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
-#endregion
 #region set windows firewall settings for logging
 Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
 #endregion
 
 #region set up grouops, file extensions and ACL collections
 $groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
-$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU
+$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU | Where-Object { $_.SamAccountName -notlike 'grp-*' }
 $domainLocalGroups = get-adgroup -filter 'samaccountname -like "*-local-*"'
 $MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
 $OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
@@ -115,7 +109,7 @@ $fileSystemRightsArray = @("FullControl", "Modify", "Write", "Read", "ListDirect
 #endregion
 #region create foleders, shares, files and ACLs
 forEach ($Group in $departmentGroups) {
-    $targetPath = "C:\File_Share\$($Group.Name)\"
+    $targetPath = "C:\File_Share\$($Group.SamAccountName)\"
     New-Item $targetPath -type directory
     write-log "Created business directory $($targetPath)"
     New-SMBShare -Name $Group.Name -Path $targetPath -FullAccess "$($domainName)\$($Group.samAccountName)"
@@ -135,7 +129,7 @@ forEach ($Group in $departmentGroups) {
 
         set-CustomACLs @customACLParams
     }
-    $totalfiles = get-random -Minimum 53 -Maximum 207
+    $totalfiles = get-random -Minimum 10 -Maximum 30
     for ($i = 0; $i -le $totalfiles; $i++) {
         $fileName = ([System.IO.Path]::GetRandomFileName()).Split('.')[0]
         $extension = $AllExtensions | Get-Random
