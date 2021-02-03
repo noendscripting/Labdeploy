@@ -1,0 +1,180 @@
+FileSystemRights,IdenitylRefrence,TargetPath,InheritanceFlags,PropagationFlags,AccessControlType,File
+Modify,grp-Fabrikam-local-8,C:\File_Share\Logistics\,0,0,1,FALSE
+Write,grp-Fabrikam-local-9,C:\File_Share\Logistics\,2,2,1,FALSE
+Modify,grp-Fabrikam-local-5,C:\File_Share\Logistics\3yfkj3uu.mov,,,0,TRUE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Logistics\241s4fuy.mp4,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-1,C:\File_Share\Logistics\10mmb5wi.pptx,,,0,TRUE
+Modify,266478,C:\File_Share\Logistics\povalstm.doc,,,1,TRUE
+Write,grp-Fabrikam-local-4,C:\File_Share\Information Technology\,1,0,0,FALSE
+Write,grp-Fabrikam-local-8,C:\File_Share\Information Technology\,2,1,1,FALSE
+Read,grp-Fabrikam-local-1,C:\File_Share\Information Technology\q3hkztnl.mpeg2,,,1,TRUE
+Traverse,grp-Fabrikam-local-8,C:\File_Share\Information Technology\0wwr5zr3.wma,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-7,C:\File_Share\Information Technology\t5pvk0d0.wmv,,,0,TRUE
+Traverse,810466,C:\File_Share\Information Technology\lfj14zid.docx,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-8,C:\File_Share\IT Support\,0,0,1,FALSE
+Read,grp-Fabrikam-local-11,C:\File_Share\IT Support\,2,2,1,FALSE
+Traverse,grp-Fabrikam-local-12,C:\File_Share\IT Support\,2,2,0,FALSE
+Modify,grp-Fabrikam-local-6,C:\File_Share\IT Support\i1zrtccb.ogg,,,1,TRUE
+Write,grp-Fabrikam-local-12,C:\File_Share\IT Support\sedrbyat.avi,,,1,TRUE
+FullControl,grp-Fabrikam-local-9,C:\File_Share\IT Support\llwwzppp.mov,,,1,TRUE
+Write,709924,C:\File_Share\IT Support\ec3tmydv.docx,,,1,TRUE
+Read,grp-Fabrikam-local-3,C:\File_Share\Strategic Information Systems\,1,0,0,FALSE
+ListDirectory,grp-Fabrikam-local-8,C:\File_Share\Strategic Information Systems\,0,1,1,FALSE
+ListDirectory,grp-Fabrikam-local-6,C:\File_Share\Strategic Information Systems\,1,2,0,FALSE
+FullControl,grp-Fabrikam-local-7,C:\File_Share\Strategic Information Systems\,2,0,0,FALSE
+Modify,grp-Fabrikam-local-10,C:\File_Share\Strategic Information Systems\3mzmumj3.pdf,,,0,TRUE
+Read,grp-Fabrikam-local-2,C:\File_Share\Strategic Information Systems\4vghnve5.dot,,,1,TRUE
+Write,grp-Fabrikam-local-9,C:\File_Share\Strategic Information Systems\k4or3g0u.pptx,,,0,TRUE
+FullControl,729448,C:\File_Share\Strategic Information Systems\njaylopi.mpeg3,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-3,C:\File_Share\Data Entry\,1,1,0,FALSE
+Modify,grp-Fabrikam-local-4,C:\File_Share\Data Entry\,1,1,1,FALSE
+ListDirectory,grp-Fabrikam-local-7,C:\File_Share\Data Entry\nvbivcys.doc,,,0,TRUE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Data Entry\dxsk55f4.docx,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\Data Entry\dspr022s.ram,,,0,TRUE
+Traverse,458465,C:\File_Share\Data Entry\nvbivcys.doc,,,1,TRUE
+FullControl,grp-Fabrikam-local-9,C:\File_Share\Research and Development\,2,0,0,FALSE
+Modify,grp-Fabrikam-local-4,C:\File_Share\Research and Development\,0,0,0,FALSE
+ListDirectory,grp-Fabrikam-local-5,C:\File_Share\Research and Development\,1,2,1,FALSE
+FullControl,grp-Fabrikam-local-11,C:\File_Share\Research and Development\,0,0,0,FALSE
+Read,grp-Fabrikam-local-4,C:\File_Share\Research and Development\kgviyr4s.rm,,,1,TRUE
+Traverse,grp-Fabrikam-local-2,C:\File_Share\Research and Development\gqorwbsc.midi,,,1,TRUE
+FullControl,grp-Fabrikam-local-9,C:\File_Share\Research and Development\100fyq5o.doc,,,1,TRUE
+Read,118445,C:\File_Share\Research and Development\5yuxmgmm.rm,,,1,TRUE
+Traverse,grp-Fabrikam-local-7,C:\File_Share\Strategic Sourcing\,0,1,1,FALSE
+Traverse,grp-Fabrikam-local-3,C:\File_Share\Strategic Sourcing\,0,1,1,FALSE
+Write,grp-Fabrikam-local-1,C:\File_Share\Strategic Sourcing\,1,2,0,FALSE
+Write,grp-Fabrikam-local-10,C:\File_Share\Strategic Sourcing\,1,2,1,FALSE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Strategic Sourcing\,1,0,1,FALSE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Strategic Sourcing\5xyhwdrx.wmv,,,0,TRUE
+FullControl,grp-Fabrikam-local-7,C:\File_Share\Strategic Sourcing\5afanb2d.pdf,,,1,TRUE
+Read,grp-Fabrikam-local-2,C:\File_Share\Strategic Sourcing\tswjknit.mpeg3,,,0,TRUE
+Modify,832213,C:\File_Share\Strategic Sourcing\5xij2jsp.mpeg,,,0,TRUE
+Traverse,grp-Fabrikam-local-1,C:\File_Share\Purchasing\,2,1,0,FALSE
+Read,grp-Fabrikam-local-8,C:\File_Share\Purchasing\,1,1,1,FALSE
+Read,grp-Fabrikam-local-9,C:\File_Share\Purchasing\,1,1,1,FALSE
+ListDirectory,grp-Fabrikam-local-12,C:\File_Share\Purchasing\,1,2,0,FALSE
+Write,grp-Fabrikam-local-3,C:\File_Share\Purchasing\y00fto0t.mpg,,,1,TRUE
+FullControl,grp-Fabrikam-local-10,C:\File_Share\Purchasing\fnmcrpiu.docx,,,1,TRUE
+Traverse,grp-Fabrikam-local-5,C:\File_Share\Purchasing\fseq4w2p.mp4,,,0,TRUE
+ListDirectory,583185,C:\File_Share\Purchasing\4uagemyn.midi,,,1,TRUE
+Write,grp-Fabrikam-local-10,C:\File_Share\Operations\,0,2,0,FALSE
+Write,grp-Fabrikam-local-3,C:\File_Share\Operations\,0,2,1,FALSE
+FullControl,grp-Fabrikam-local-6,C:\File_Share\Operations\,0,0,1,FALSE
+Write,grp-Fabrikam-local-6,C:\File_Share\Operations\coh0xl03.docx,,,1,TRUE
+FullControl,grp-Fabrikam-local-6,C:\File_Share\Operations\txfr5xnd.mpeg2,,,0,TRUE
+FullControl,grp-Fabrikam-local-4,C:\File_Share\Operations\sbwspdlt.doc,,,1,TRUE
+Write,923770,C:\File_Share\Operations\mp3l5lbe.dot,,,0,TRUE
+FullControl,grp-Fabrikam-local-1,C:\File_Share\Public Relations\,2,0,0,FALSE
+Write,grp-Fabrikam-local-12,C:\File_Share\Public Relations\h3tsbeqn.mpeg,,,0,TRUE
+Traverse,grp-Fabrikam-local-8,C:\File_Share\Public Relations\mo2xa0nf.doc,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-3,C:\File_Share\Public Relations\nn5dbgvb.avi,,,0,TRUE
+Write,283642,C:\File_Share\Public Relations\j2bq1x35.mpeg,,,1,TRUE
+Read,grp-Fabrikam-local-4,C:\File_Share\Corporate Communications\,2,2,0,FALSE
+Read,grp-Fabrikam-local-5,C:\File_Share\Corporate Communications\,2,1,0,FALSE
+Traverse,grp-Fabrikam-local-8,C:\File_Share\Corporate Communications\rxmmqcuv.mpg,,,1,TRUE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Corporate Communications\compbmau.mp4,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-4,C:\File_Share\Corporate Communications\aftj5mla.mpeg2,,,1,TRUE
+Write,657681,C:\File_Share\Corporate Communications\rxmmqcuv.mpg,,,1,TRUE
+FullControl,grp-Fabrikam-local-11,C:\File_Share\Advertising Market Research\,0,0,0,FALSE
+Modify,grp-Fabrikam-local-12,C:\File_Share\Advertising Market Research\,1,2,0,FALSE
+FullControl,grp-Fabrikam-local-6,C:\File_Share\Advertising Market Research\,1,0,0,FALSE
+Traverse,grp-Fabrikam-local-3,C:\File_Share\Advertising Market Research\,0,2,1,FALSE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Advertising Market Research\nyikzpjj.ram,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-10,C:\File_Share\Advertising Market Research\1vcnl4dk.xls,,,1,TRUE
+Traverse,grp-Fabrikam-local-4,C:\File_Share\Advertising Market Research\feevldjq.mpeg,,,0,TRUE
+Traverse,490175,C:\File_Share\Advertising Market Research\3adzybxd.wmv,,,1,TRUE
+Modify,grp-Fabrikam-local-6,C:\File_Share\Strategic Marketing\,2,1,0,FALSE
+Modify,grp-Fabrikam-local-1,C:\File_Share\Strategic Marketing\,2,1,0,FALSE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Strategic Marketing\3gcdrqlu.ram,,,0,TRUE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Strategic Marketing\orav3bx1.mpg,,,1,TRUE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Strategic Marketing\1zq2sd0v.doc,,,1,TRUE
+Modify,456686,C:\File_Share\Strategic Marketing\teqtcl13.docx,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\Customer Service\,1,0,0,FALSE
+FullControl,grp-Fabrikam-local-5,C:\File_Share\Customer Service\,2,1,1,FALSE
+ListDirectory,grp-Fabrikam-local-11,C:\File_Share\Customer Service\ppmxc3av.pptx,,,0,TRUE
+Read,grp-Fabrikam-local-4,C:\File_Share\Customer Service\zotiwwnb.xls,,,1,TRUE
+FullControl,grp-Fabrikam-local-10,C:\File_Share\Customer Service\hmtgijnz.doc,,,0,TRUE
+Traverse,286918,C:\File_Share\Customer Service\nhwf1t1m.doc,,,1,TRUE
+Read,grp-Fabrikam-local-1,C:\File_Share\Telesales\,2,1,0,FALSE
+Traverse,grp-Fabrikam-local-3,C:\File_Share\Telesales\,2,2,0,FALSE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Telesales\,0,1,1,FALSE
+ListDirectory,grp-Fabrikam-local-5,C:\File_Share\Telesales\0jylkzbl.xls,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-12,C:\File_Share\Telesales\jmbujrjo.pptx,,,1,TRUE
+Read,grp-Fabrikam-local-11,C:\File_Share\Telesales\q5qgc0go.docx,,,0,TRUE
+Read,942569,C:\File_Share\Telesales\h0v5kcfg.avi,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\Account Management\,0,0,1,FALSE
+FullControl,grp-Fabrikam-local-10,C:\File_Share\Account Management\,2,2,0,FALSE
+Modify,grp-Fabrikam-local-3,C:\File_Share\Account Management\,0,0,1,FALSE
+Modify,grp-Fabrikam-local-7,C:\File_Share\Account Management\o5f3s0a0.docx,,,0,TRUE
+Modify,grp-Fabrikam-local-10,C:\File_Share\Account Management\45of4j4l.dot,,,1,TRUE
+FullControl,grp-Fabrikam-local-4,C:\File_Share\Account Management\jud2cfrb.docx,,,1,TRUE
+Traverse,329183,C:\File_Share\Account Management\0syjfwgz.mpeg,,,0,TRUE
+Traverse,grp-Fabrikam-local-12,C:\File_Share\Marketing\,2,2,0,FALSE
+Read,grp-Fabrikam-local-6,C:\File_Share\Marketing\,0,0,1,FALSE
+Modify,grp-Fabrikam-local-10,C:\File_Share\Marketing\,1,1,0,FALSE
+Read,grp-Fabrikam-local-3,C:\File_Share\Marketing\,2,2,1,FALSE
+Traverse,grp-Fabrikam-local-3,C:\File_Share\Marketing\qg2bodv5.xls,,,1,TRUE
+Write,grp-Fabrikam-local-1,C:\File_Share\Marketing\ufjytgfc.rm,,,0,TRUE
+Traverse,grp-Fabrikam-local-12,C:\File_Share\Marketing\zww2bewz.mp4,,,1,TRUE
+FullControl,810466,C:\File_Share\Marketing\e0jypr25.wma,,,0,TRUE
+Modify,grp-Fabrikam-local-3,C:\File_Share\Sales\,1,1,0,FALSE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\Sales\,2,2,0,FALSE
+FullControl,grp-Fabrikam-local-4,C:\File_Share\Sales\,1,0,1,FALSE
+ListDirectory,grp-Fabrikam-local-11,C:\File_Share\Sales\,1,0,0,FALSE
+ListDirectory,grp-Fabrikam-local-6,C:\File_Share\Sales\qwco0inj.wma,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-3,C:\File_Share\Sales\zkwizd4r.avi,,,1,TRUE
+Traverse,grp-Fabrikam-local-7,C:\File_Share\Sales\ah2x325b.wmv,,,1,TRUE
+Traverse,169485,C:\File_Share\Sales\5k3hixn4.doc,,,0,TRUE
+Modify,grp-Fabrikam-local-3,C:\File_Share\Payroll\,0,1,1,FALSE
+Write,grp-Fabrikam-local-4,C:\File_Share\Payroll\,2,1,1,FALSE
+FullControl,grp-Fabrikam-local-3,C:\File_Share\Payroll\f4cotcsi.xls,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-1,C:\File_Share\Payroll\w0aydze4.pdf,,,1,TRUE
+FullControl,grp-Fabrikam-local-3,C:\File_Share\Payroll\fskzrcqv.mp4,,,0,TRUE
+Modify,536069,C:\File_Share\Payroll\zi14bm2y.mp3,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\Recruitment\,2,1,0,FALSE
+FullControl,grp-Fabrikam-local-2,C:\File_Share\Recruitment\,0,1,0,FALSE
+Write,grp-Fabrikam-local-12,C:\File_Share\Recruitment\,2,0,1,FALSE
+Traverse,grp-Fabrikam-local-3,C:\File_Share\Recruitment\,0,2,1,FALSE
+FullControl,grp-Fabrikam-local-1,C:\File_Share\Recruitment\3fooaswo.mp4,,,1,TRUE
+Read,grp-Fabrikam-local-4,C:\File_Share\Recruitment\jie41uie.docx,,,0,TRUE
+FullControl,grp-Fabrikam-local-11,C:\File_Share\Recruitment\qoeihgyf.dot,,,1,TRUE
+Read,657258,C:\File_Share\Recruitment\d2vmsxtn.wma,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-3,C:\File_Share\Training\,1,2,0,FALSE
+Traverse,grp-Fabrikam-local-9,C:\File_Share\Training\,1,0,1,FALSE
+FullControl,grp-Fabrikam-local-10,C:\File_Share\Training\ttgvhoyy.ppt,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-3,C:\File_Share\Training\smv35ww2.xls,,,1,TRUE
+Traverse,grp-Fabrikam-local-11,C:\File_Share\Training\gg3dmtwi.xls,,,1,TRUE
+Write,237867,C:\File_Share\Training\qasjjxit.pdf,,,1,TRUE
+FullControl,grp-Fabrikam-local-7,C:\File_Share\Human Resources\,2,0,0,FALSE
+Modify,grp-Fabrikam-local-2,C:\File_Share\Human Resources\,2,2,1,FALSE
+FullControl,grp-Fabrikam-local-12,C:\File_Share\Human Resources\,2,0,0,FALSE
+Modify,grp-Fabrikam-local-11,C:\File_Share\Human Resources\,1,2,1,FALSE
+Traverse,grp-Fabrikam-local-6,C:\File_Share\Human Resources\,1,0,0,FALSE
+Traverse,grp-Fabrikam-local-4,C:\File_Share\Human Resources\xhcm31qn.wma,,,0,TRUE
+Traverse,grp-Fabrikam-local-11,C:\File_Share\Human Resources\gtwjn0qa.mp3,,,1,TRUE
+ListDirectory,grp-Fabrikam-local-4,C:\File_Share\Human Resources\q0jezwpt.wma,,,1,TRUE
+Write,689236,C:\File_Share\Human Resources\q0jezwpt.wma,,,0,TRUE
+Modify,grp-Fabrikam-local-12,C:\File_Share\Accounting\,0,2,1,FALSE
+Traverse,grp-Fabrikam-local-1,C:\File_Share\Accounting\,0,0,0,FALSE
+Modify,grp-Fabrikam-local-7,C:\File_Share\Accounting\sllgxab5.rm,,,0,TRUE
+Write,grp-Fabrikam-local-4,C:\File_Share\Accounting\w0m34xjb.wma,,,1,TRUE
+FullControl,grp-Fabrikam-local-6,C:\File_Share\Accounting\ptytwdhe.wmv,,,1,TRUE
+Read,896519,C:\File_Share\Accounting\bp0demm1.mp3,,,0,TRUE
+FullControl,grp-Fabrikam-local-11,C:\File_Share\Finance\,2,0,0,FALSE
+ListDirectory,grp-Fabrikam-local-12,C:\File_Share\Finance\,1,2,0,FALSE
+Modify,grp-Fabrikam-local-7,C:\File_Share\Finance\,2,1,1,FALSE
+Read,grp-Fabrikam-local-3,C:\File_Share\Finance\,2,0,1,FALSE
+Modify,grp-Fabrikam-local-3,C:\File_Share\Finance\g5rn21s5.doc,,,1,TRUE
+Traverse,grp-Fabrikam-local-5,C:\File_Share\Finance\mzchr5mo.docx,,,1,TRUE
+Modify,grp-Fabrikam-local-3,C:\File_Share\Finance\voowz3hn.rm,,,0,TRUE
+Traverse,852322,C:\File_Share\Finance\juqvoi3k.midi,,,1,TRUE
+Read,grp-Fabrikam-local-8,C:\File_Share\tier2admins\,2,0,0,FALSE
+ListDirectory,grp-Fabrikam-local-9,C:\File_Share\tier2admins\5cixgutj.rm,,,1,TRUE
+Read,grp-Fabrikam-local-7,C:\File_Share\tier2admins\tnwkrweq.mov,,,0,TRUE
+Write,grp-Fabrikam-local-1,C:\File_Share\tier2admins\lrwn4aox.pptx,,,0,TRUE
+Traverse,520182,C:\File_Share\tier2admins\mqr4tak3.ppt,,,0,TRUE
+ListDirectory,grp-Fabrikam-local-4,C:\File_Share\Service Desk Operators\,2,1,1,FALSE
+FullControl,grp-Fabrikam-local-12,C:\File_Share\Service Desk Operators\5rfndfht.wma,,,0,TRUE
+Traverse,grp-Fabrikam-local-8,C:\File_Share\Service Desk Operators\ogbz4ddp.mpeg3,,,1,TRUE
+Modify,grp-Fabrikam-local-9,C:\File_Share\Service Desk Operators\e4edcmxi.wma,,,0,TRUE
+FullControl,746731,C:\File_Share\Service Desk Operators\lapr31qw.doc,,,0,TRUE

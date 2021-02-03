@@ -49,7 +49,7 @@ function set-CustomACLs {
         
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl $TargetPath
-    write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
+    write-log "Granted $($FileSystemRights), Permisison to Principal $($accessRule.IdentityReference) to $($TargetPath) InheritanceFlags $($InheritanceFlags) PropagationFlags $($PropagationFlags) AccessControlType $($AccessControlType) " -severity SUCCESS
 
 }
 
@@ -84,77 +84,52 @@ New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name
 #endregion
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
-#$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
+$scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
 $domainName = $domainData.NetbiosName
 $domainDN = $domainData.distinguishedname
-write-log "Connected to domain $($domainName)"
+$groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
+write-log "Connected to domain $($domainName)" -severity SUCCESS
 #endregion#>
 
 #region set windows firewall settings for logging
 Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
 #endregion
 
-#region set up grouops, file extensions and ACL collections
-$groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
-$departmentGroups = get-adgroup -filter * -SearchBase $groupsOU | Where-Object { $_.SamAccountName -notlike 'grp-*' }
-$domainLocalGroups = get-adgroup -filter 'samaccountname -like "*-local-*"'
-$MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
-$OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
-$AllExtensions = $MultimediaExtensions + $OfficeExtensions
-$inheritanceFlagsArray = @(0, 1, 2)
-$propagationFlagsArray = @(0, 1, 2)
-$AccessControlTypeArray = @(0, 1)
-$fileSystemRightsArray = @("FullControl", "Modify", "Write", "Read", "ListDirectory", "Traverse")
-#endregion
-#region create foleders, shares, files and ACLs
-forEach ($Group in $departmentGroups) {
-    $targetPath = "C:\File_Share\$($Group.SamAccountName)\"
-    New-Item $targetPath -type directory
-    write-log "Created business directory $($targetPath)"
-    New-SMBShare -Name $Group.Name -Path $targetPath -FullAccess "$($domainName)\$($Group.samAccountName)"
-    write-log "Created share $($Group.Name) using path $($targetPath)"
-    #selecting ramdom genral groiup and assigning to the newly created folder with random permissions 
-    $domainLocalGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
-        $customACLParams = @{
-            "TargetPath"        = $targetPath
-            "IdenitylRefrence"  = "$($domainName)\$($psitem.samaccountname)"
-            "FileSystemRights"  = ($fileSystemRightsArray | Get-Random)
-            "InheritanceFlags"  = ($inheritanceFlagsArray | Get-random)
-            "PropagationFlags"  = ($propagationFlagsArray | Get-random)
-            "AccessControlType" = ($AccessControlTypeArray | Get-random)
-            "File"              = $false
-
-        }
-
-        set-CustomACLs @customACLParams
-    }
-    $totalfiles = get-random -Minimum 10 -Maximum 30
-    for ($i = 0; $i -le $totalfiles; $i++) {
-        $fileName = ([System.IO.Path]::GetRandomFileName()).Split('.')[0]
-        $extension = $AllExtensions | Get-Random
-        New-Item "$($targetPath)$($fileName)$($extension)" -type file -Force | Out-Null 
-        write-log "Created ramdom file $($targetPath)$($fileName)$($extension)"
-        Clear-Variable fileName
-        Clear-Variable extension 
-
-    }
-    #selecting random files and assigning random permssions to a random generic group
-    Get-ChildItem $targetPath | Get-Random -Count 3 | ForEach-Object {
-
-        $customACLParams = @{
-            "TargetPath"        = $psitem.FullName
-            "IdenitylRefrence"  = "$($domainName)\$($domainLocalGroups.samaccountname | get-random)"
-            "FileSystemRights"  = ($fileSystemRightsArray | Get-Random)
-            "AccessControlType" = ($AccessControlTypeArray | Get-random)
-            "File"              = $true
-
-        }
-        set-CustomACLs @customACLParams
+#region create folders, shares, files
+$filesystemData = import-csv "$($scriptRoot)\$($domainName)-file-directory.csv"
+forEach ($target in $filesystemData) {
+    
+    New-Item $target.path -type $target.type | Out-Null
+    write-log "Created directory $($target.Path)" -severity SUCCESS
+    if ($target.type -eq 'directory') {
+        New-SMBShare -Name $target.Path.Split("\")[2]  -Path $target.path -FullAccess "$($domainName)\$($target.Path.Split("\")[2])" | Out-Null
+        write-log "Created share $($target.Path.Split("\")[2]) using path $($target.Path)" -severity SUCCESS
     }
 }
+
 #endregion
-#region Grating "" group permissions to start\stop Spooler service
+#region Create permisisons on directories and files
+$aclData = import-csv "$($scriptRoot)\$($domainName)-file-permissions.csv"
+
+foreach ($aclEntry in $aclData) {
+
+    $customACLParams = @{
+        "TargetPath"        = $aclEntry.targetPath
+        "IdenitylRefrence"  = "$($domainName)\$($aclEntry.IdenitylRefrence)"
+        "FileSystemRights"  = $aclEntry.FileSystemRights
+        "InheritanceFlags"  = $aclEntry.InheritanceFlags
+        "PropagationFlags"  = $aclEntry.PropagationFlags
+        "AccessControlType" = $aclEntry.AccessControlType
+        "File"              = [System.Convert]::ToBoolean($aclEntry.File)
+
+    }
+    set-CustomACLs @customACLParams
+
+}
+
+    
+#region Granting Service Desk Operators group permissions to start\stop Spooler service
 $operatorsGroupSid = (Get-ADGroup -Identity 'Service Desk Operators').sid
 
 
@@ -172,6 +147,9 @@ $ps.WaitForExit()
 
 If (!($outputData -match "SUCCESS")) {
     Throw  "Adding permissions to spooler server failed with error`n$($outputData)"
+}
+else {
+    write-log "Granted permissions to start\stop spooler to Service Desk Operators group" -severity SUCCESS
 }
 
 #endregion

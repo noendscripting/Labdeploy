@@ -1,0 +1,195 @@
+FileSystemRights,IdenitylRefrence,TargetPath,InheritanceFlags,PropagationFlags,AccessControlType,File
+Modify,contosoad\grp-Contoso-local-26,C:\File_Share\tier2admins\,2,2,1,FALSE
+ListDirectory,contosoad\grp-Contoso-local-13,C:\File_Share\tier2admins\cs3kq1bx.docx,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-25,C:\File_Share\tier2admins\w3ttly2a.pptx,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-17,C:\File_Share\tier2admins\l4lqgplv.xls,,,1,TRUE
+FullControl,684617,C:\File_Share\tier2admins\kqu5z3uu.pptx,,,1,TRUE
+Write,contosoad\grp-Contoso-local-13,C:\File_Share\Service Desk Operators\,1,0,1,FALSE
+Modify,contosoad\grp-Contoso-local-7,C:\File_Share\Service Desk Operators\,0,1,1,FALSE
+Write,contosoad\grp-Contoso-local-10,C:\File_Share\Service Desk Operators\,2,1,1,FALSE
+ListDirectory,contosoad\grp-Contoso-local-25,C:\File_Share\Service Desk Operators\,2,1,1,FALSE
+Traverse,contosoad\grp-Contoso-local-37,C:\File_Share\Service Desk Operators\ss5lgssy.midi,,,0,TRUE
+FullControl,contosoad\grp-Contoso-local-12,C:\File_Share\Service Desk Operators\c4rxsuhz.mp3,,,0,TRUE
+Read,contosoad\grp-Contoso-local-9,C:\File_Share\Service Desk Operators\1zkvzzpp.ogg,,,1,TRUE
+Read,329638,C:\File_Share\Service Desk Operators\c4rxsuhz.mp3,,,0,TRUE
+Modify,contosoad\grp-Contoso-local-11,C:\File_Share\Logistics\,1,2,0,FALSE
+Write,contosoad\grp-Contoso-local-26,C:\File_Share\Logistics\,0,0,1,FALSE
+ListDirectory,contosoad\grp-Contoso-local-13,C:\File_Share\Logistics\,2,2,0,FALSE
+Write,contosoad\grp-Contoso-local-29,C:\File_Share\Logistics\kml30ive.mp4,,,0,TRUE
+Write,contosoad\grp-Contoso-local-24,C:\File_Share\Logistics\ejqhjlml.xls,,,0,TRUE
+Write,contosoad\grp-Contoso-local-17,C:\File_Share\Logistics\tzgbxwrt.pdf,,,1,TRUE
+Write,458781,C:\File_Share\Logistics\hlbxfzx5.pdf,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-31,C:\File_Share\Information Technology\,1,0,1,FALSE
+ListDirectory,contosoad\grp-Contoso-local-33,C:\File_Share\Information Technology\,1,1,1,FALSE
+Modify,contosoad\grp-Contoso-local-7,C:\File_Share\Information Technology\,1,1,0,FALSE
+Traverse,contosoad\grp-Contoso-local-34,C:\File_Share\Information Technology\tw2vv5rq.mp4,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-1,C:\File_Share\Information Technology\jphklo35.mpeg3,,,0,TRUE
+Modify,contosoad\grp-Contoso-local-27,C:\File_Share\Information Technology\2rtfcv0b.docx,,,0,TRUE
+ListDirectory,939690,C:\File_Share\Information Technology\sz2diwx3.pptx,,,1,TRUE
+Traverse,contosoad\grp-Contoso-local-17,C:\File_Share\IT Support\,0,1,0,FALSE
+Write,contosoad\grp-Contoso-local-7,C:\File_Share\IT Support\simzeaa5.doc,,,0,TRUE
+Read,contosoad\grp-Contoso-local-8,C:\File_Share\IT Support\bcigbymp.pptx,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-27,C:\File_Share\IT Support\cz0kkucf.pptx,,,0,TRUE
+Read,801495,C:\File_Share\IT Support\jrpvprvu.mp3,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-31,C:\File_Share\Strategic Information Systems\,0,0,1,FALSE
+Write,contosoad\grp-Contoso-local-7,C:\File_Share\Strategic Information Systems\,1,1,0,FALSE
+Write,contosoad\grp-Contoso-local-23,C:\File_Share\Strategic Information Systems\,2,0,1,FALSE
+Traverse,contosoad\grp-Contoso-local-30,C:\File_Share\Strategic Information Systems\c12q4mgo.mpg,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-5,C:\File_Share\Strategic Information Systems\xftjq0cc.mpg,,,1,TRUE
+Read,contosoad\grp-Contoso-local-8,C:\File_Share\Strategic Information Systems\y3zekh45.ppt,,,0,TRUE
+ListDirectory,449357,C:\File_Share\Strategic Information Systems\eeivqrcw.doc,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-19,C:\File_Share\Data Entry\,0,2,0,FALSE
+FullControl,contosoad\grp-Contoso-local-34,C:\File_Share\Data Entry\,2,2,1,FALSE
+Traverse,contosoad\grp-Contoso-local-25,C:\File_Share\Data Entry\oevlu1c1.pptx,,,0,TRUE
+Read,contosoad\grp-Contoso-local-3,C:\File_Share\Data Entry\41oial5m.pptx,,,1,TRUE
+Traverse,contosoad\grp-Contoso-local-33,C:\File_Share\Data Entry\03yunlin.doc,,,0,TRUE
+FullControl,999435,C:\File_Share\Data Entry\yoixmnp3.mp4,,,1,TRUE
+Read,contosoad\grp-Contoso-local-36,C:\File_Share\Research and Development\,2,0,1,FALSE
+FullControl,contosoad\grp-Contoso-local-20,C:\File_Share\Research and Development\,0,1,1,FALSE
+Modify,contosoad\grp-Contoso-local-31,C:\File_Share\Research and Development\,2,1,0,FALSE
+Traverse,contosoad\grp-Contoso-local-27,C:\File_Share\Research and Development\12z3xhpg.mpeg3,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-28,C:\File_Share\Research and Development\tkjh011q.avi,,,0,TRUE
+Traverse,contosoad\grp-Contoso-local-8,C:\File_Share\Research and Development\oizcm5mu.ppt,,,0,TRUE
+FullControl,903916,C:\File_Share\Research and Development\wjenzbiw.mpeg,,,1,TRUE
+Traverse,contosoad\grp-Contoso-local-27,C:\File_Share\Strategic Sourcing\,1,2,0,FALSE
+Write,contosoad\grp-Contoso-local-25,C:\File_Share\Strategic Sourcing\,0,2,0,FALSE
+FullControl,contosoad\grp-Contoso-local-37,C:\File_Share\Strategic Sourcing\ecsal0fv.midi,,,1,TRUE
+Read,contosoad\grp-Contoso-local-25,C:\File_Share\Strategic Sourcing\lw0zaazd.midi,,,0,TRUE
+Traverse,contosoad\grp-Contoso-local-27,C:\File_Share\Strategic Sourcing\rh3dbktu.ppt,,,1,TRUE
+Traverse,285685,C:\File_Share\Strategic Sourcing\d2vvmy5i.doc,,,1,TRUE
+Read,contosoad\grp-Contoso-local-10,C:\File_Share\Purchasing\,1,2,1,FALSE
+Traverse,contosoad\grp-Contoso-local-12,C:\File_Share\Purchasing\,0,2,0,FALSE
+Modify,contosoad\grp-Contoso-local-8,C:\File_Share\Purchasing\,1,0,0,FALSE
+Write,contosoad\grp-Contoso-local-11,C:\File_Share\Purchasing\,1,2,1,FALSE
+Traverse,contosoad\grp-Contoso-local-17,C:\File_Share\Purchasing\3cbealex.pdf,,,0,TRUE
+Traverse,contosoad\grp-Contoso-local-30,C:\File_Share\Purchasing\0h5uszh2.midi,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-23,C:\File_Share\Purchasing\enznawrz.mp4,,,0,TRUE
+Modify,117927,C:\File_Share\Purchasing\2gjhk0cy.pptx,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-37,C:\File_Share\Operations\,1,1,1,FALSE
+Read,contosoad\grp-Contoso-local-28,C:\File_Share\Operations\,1,2,0,FALSE
+Write,contosoad\grp-Contoso-local-26,C:\File_Share\Operations\cwfp0hmg.midi,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-20,C:\File_Share\Operations\ajj4pkz4.ogg,,,0,TRUE
+FullControl,contosoad\grp-Contoso-local-17,C:\File_Share\Operations\z5u24zoq.wma,,,1,TRUE
+Read,552542,C:\File_Share\Operations\nzlrzjvc.mpeg3,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-9,C:\File_Share\Public Relations\,0,1,1,FALSE
+Read,contosoad\grp-Contoso-local-6,C:\File_Share\Public Relations\,1,0,1,FALSE
+Write,contosoad\grp-Contoso-local-1,C:\File_Share\Public Relations\,2,1,1,FALSE
+Write,contosoad\grp-Contoso-local-27,C:\File_Share\Public Relations\,2,1,1,FALSE
+FullControl,contosoad\grp-Contoso-local-20,C:\File_Share\Public Relations\,2,0,0,FALSE
+Read,contosoad\grp-Contoso-local-24,C:\File_Share\Public Relations\2pqirdti.avi,,,1,TRUE
+Write,contosoad\grp-Contoso-local-8,C:\File_Share\Public Relations\2m0j4erv.ppt,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-2,C:\File_Share\Public Relations\3s30heia.midi,,,1,TRUE
+Traverse,913506,C:\File_Share\Public Relations\lp3jb5es.ppt,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-14,C:\File_Share\Corporate Communications\,1,2,1,FALSE
+Traverse,contosoad\grp-Contoso-local-22,C:\File_Share\Corporate Communications\ywhxsmbz.pdf,,,0,TRUE
+Write,contosoad\grp-Contoso-local-3,C:\File_Share\Corporate Communications\mqofucub.doc,,,1,TRUE
+Read,contosoad\grp-Contoso-local-12,C:\File_Share\Corporate Communications\vszvjbjh.avi,,,1,TRUE
+Modify,177016,C:\File_Share\Corporate Communications\qvjuxhzo.docx,,,0,TRUE
+FullControl,contosoad\grp-Contoso-local-17,C:\File_Share\Advertising Market Research\,1,2,1,FALSE
+Modify,contosoad\grp-Contoso-local-19,C:\File_Share\Advertising Market Research\,1,2,1,FALSE
+Traverse,contosoad\grp-Contoso-local-18,C:\File_Share\Advertising Market Research\,0,1,0,FALSE
+Traverse,contosoad\grp-Contoso-local-17,C:\File_Share\Advertising Market Research\dmedsxbz.xls,,,1,TRUE
+Write,contosoad\grp-Contoso-local-20,C:\File_Share\Advertising Market Research\pxqcpmx4.ogg,,,0,TRUE
+Read,contosoad\grp-Contoso-local-1,C:\File_Share\Advertising Market Research\eqhl4mo0.mpeg2,,,0,TRUE
+Modify,329638,C:\File_Share\Advertising Market Research\jkamqc3e.doc,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-30,C:\File_Share\Strategic Marketing\,0,2,1,FALSE
+Write,contosoad\grp-Contoso-local-14,C:\File_Share\Strategic Marketing\,2,2,0,FALSE
+Modify,contosoad\grp-Contoso-local-18,C:\File_Share\Strategic Marketing\,1,1,0,FALSE
+FullControl,contosoad\grp-Contoso-local-2,C:\File_Share\Strategic Marketing\,0,2,0,FALSE
+Read,contosoad\grp-Contoso-local-33,C:\File_Share\Strategic Marketing\,2,1,1,FALSE
+Write,contosoad\grp-Contoso-local-35,C:\File_Share\Strategic Marketing\o2ykbund.wmv,,,0,TRUE
+FullControl,contosoad\grp-Contoso-local-31,C:\File_Share\Strategic Marketing\fahlumof.dot,,,0,TRUE
+FullControl,contosoad\grp-Contoso-local-32,C:\File_Share\Strategic Marketing\2yi1f3ys.xls,,,0,TRUE
+Modify,199584,C:\File_Share\Strategic Marketing\o2ykbund.wmv,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-19,C:\File_Share\Customer Service\,0,2,0,FALSE
+Modify,contosoad\grp-Contoso-local-37,C:\File_Share\Customer Service\,0,2,1,FALSE
+Modify,contosoad\grp-Contoso-local-37,C:\File_Share\Customer Service\brskq1xh.ogg,,,1,TRUE
+Write,contosoad\grp-Contoso-local-2,C:\File_Share\Customer Service\uehaui4p.wmv,,,1,TRUE
+Traverse,contosoad\grp-Contoso-local-2,C:\File_Share\Customer Service\2rmet3ym.mpg,,,0,TRUE
+FullControl,545057,C:\File_Share\Customer Service\a4n103al.mpg,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-36,C:\File_Share\Telesales\,1,1,0,FALSE
+Read,contosoad\grp-Contoso-local-12,C:\File_Share\Telesales\,2,0,1,FALSE
+FullControl,contosoad\grp-Contoso-local-25,C:\File_Share\Telesales\poywszlc.pdf,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-27,C:\File_Share\Telesales\hzriykrl.midi,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-12,C:\File_Share\Telesales\bbeekppw.rm,,,1,TRUE
+Modify,355177,C:\File_Share\Telesales\r0bzmyxs.ram,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-18,C:\File_Share\Account Management\,1,2,1,FALSE
+FullControl,contosoad\grp-Contoso-local-2,C:\File_Share\Account Management\,0,1,1,FALSE
+Traverse,contosoad\grp-Contoso-local-35,C:\File_Share\Account Management\,2,1,0,FALSE
+Read,contosoad\grp-Contoso-local-10,C:\File_Share\Account Management\kuoqga3e.doc,,,0,TRUE
+Write,contosoad\grp-Contoso-local-37,C:\File_Share\Account Management\e5vbdbqy.mov,,,1,TRUE
+Traverse,contosoad\grp-Contoso-local-16,C:\File_Share\Account Management\idzxz31r.ppt,,,1,TRUE
+Read,177016,C:\File_Share\Account Management\kgkvsjld.docx,,,0,TRUE
+Read,contosoad\grp-Contoso-local-25,C:\File_Share\Marketing\,2,0,0,FALSE
+Modify,contosoad\grp-Contoso-local-20,C:\File_Share\Marketing\,1,0,1,FALSE
+Write,contosoad\grp-Contoso-local-31,C:\File_Share\Marketing\,2,2,0,FALSE
+Read,contosoad\grp-Contoso-local-21,C:\File_Share\Marketing\erewsbgt.docx,,,1,TRUE
+FullControl,contosoad\grp-Contoso-local-6,C:\File_Share\Marketing\rovyyl5g.mov,,,0,TRUE
+Modify,contosoad\grp-Contoso-local-6,C:\File_Share\Marketing\zkhrkxap.ppt,,,0,TRUE
+Traverse,554778,C:\File_Share\Marketing\2hmjji14.mov,,,1,TRUE
+Write,contosoad\grp-Contoso-local-11,C:\File_Share\Sales\,0,0,0,FALSE
+FullControl,contosoad\grp-Contoso-local-26,C:\File_Share\Sales\,2,0,1,FALSE
+FullControl,contosoad\grp-Contoso-local-18,C:\File_Share\Sales\uh30vivj.mov,,,0,TRUE
+Read,contosoad\grp-Contoso-local-22,C:\File_Share\Sales\urv40nwm.dot,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-10,C:\File_Share\Sales\g5qfg4jv.mov,,,0,TRUE
+ListDirectory,420783,C:\File_Share\Sales\bnnl0wgk.ppt,,,0,TRUE
+Traverse,contosoad\grp-Contoso-local-36,C:\File_Share\Payroll\,0,1,0,FALSE
+Modify,contosoad\grp-Contoso-local-10,C:\File_Share\Payroll\yc3uppvc.docx,,,0,TRUE
+Write,contosoad\grp-Contoso-local-23,C:\File_Share\Payroll\s4kcrxln.wma,,,1,TRUE
+Read,contosoad\grp-Contoso-local-17,C:\File_Share\Payroll\a54uju0m.mpg,,,1,TRUE
+Traverse,528354,C:\File_Share\Payroll\tuuzabq3.docx,,,0,TRUE
+Read,contosoad\grp-Contoso-local-22,C:\File_Share\Recruitment\,0,1,0,FALSE
+FullControl,contosoad\grp-Contoso-local-25,C:\File_Share\Recruitment\,1,0,1,FALSE
+Read,contosoad\grp-Contoso-local-25,C:\File_Share\Recruitment\5cwgyztt.wma,,,1,TRUE
+Write,contosoad\grp-Contoso-local-31,C:\File_Share\Recruitment\powtoee3.mpeg2,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-6,C:\File_Share\Recruitment\aspps0q3.docx,,,0,TRUE
+Traverse,962611,C:\File_Share\Recruitment\wulfxalc.midi,,,0,TRUE
+Modify,contosoad\grp-Contoso-local-12,C:\File_Share\Training\,0,1,1,FALSE
+Traverse,contosoad\grp-Contoso-local-23,C:\File_Share\Training\0zb5fawh.docx,,,0,TRUE
+Modify,contosoad\grp-Contoso-local-39,C:\File_Share\Training\2cmsin5a.ogg,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-1,C:\File_Share\Training\ivthptkq.xls,,,1,TRUE
+Modify,579734,C:\File_Share\Training\ivthptkq.xls,,,1,TRUE
+Write,contosoad\grp-Contoso-local-36,C:\File_Share\Human Resources\,2,1,0,FALSE
+Read,contosoad\grp-Contoso-local-8,C:\File_Share\Human Resources\3fwqhzgd.doc,,,1,TRUE
+ListDirectory,contosoad\grp-Contoso-local-34,C:\File_Share\Human Resources\cuq1awf0.rm,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-21,C:\File_Share\Human Resources\qhmqvb1n.xls,,,1,TRUE
+Modify,474048,C:\File_Share\Human Resources\fcj1dxfk.rm,,,1,TRUE
+Write,contosoad\grp-Contoso-local-24,C:\File_Share\Accounting\,0,0,1,FALSE
+Traverse,contosoad\grp-Contoso-local-13,C:\File_Share\Accounting\,2,1,1,FALSE
+Write,contosoad\grp-Contoso-local-39,C:\File_Share\Accounting\mfi3qtsc.mpeg,,,0,TRUE
+Write,contosoad\grp-Contoso-local-17,C:\File_Share\Accounting\2htgb11d.wmv,,,0,TRUE
+ListDirectory,contosoad\grp-Contoso-local-16,C:\File_Share\Accounting\sfeislbg.mpeg3,,,0,TRUE
+FullControl,943664,C:\File_Share\Accounting\omd1ifx1.avi,,,1,TRUE
+Modify,contosoad\grp-Contoso-local-6,C:\File_Share\Finance\,1,0,0,FALSE
+FullControl,contosoad\grp-Contoso-local-35,C:\File_Share\Finance\,0,1,1,FALSE
+Read,contosoad\grp-Contoso-local-14,C:\File_Share\Finance\,0,1,1,FALSE
+ListDirectory,contosoad\grp-Contoso-local-6,C:\File_Share\Finance\lvjwn0ap.doc,,,1,TRUE
+Write,contosoad\grp-Contoso-local-1,C:\File_Share\Finance\eck2ufx1.rm,,,1,TRUE
+Read,contosoad\grp-Contoso-local-28,C:\File_Share\Finance\cybavccq.docx,,,1,TRUE
+ListDirectory,763992,C:\File_Share\Finance\xw3wqjum.docx,,,0,TRUE
+Modify,contosoad\Account Management,C:\File_Share\Account Management\,2,2,0,FALSE
+Modify,contosoad\Accounting,C:\File_Share\Accounting\,2,2,0,FALSE
+Modify,contosoad\Advertising Market Research,C:\File_Share\Advertising Market Research\,2,2,0,FALSE
+Modify,contosoad\Corporate Communications,C:\File_Share\Corporate Communications\,2,2,0,FALSE
+Modify,contosoad\Customer Service,C:\File_Share\Customer Service\,2,2,0,FALSE
+Modify,contosoad\Data Entry,C:\File_Share\Data Entry\,2,2,0,FALSE
+Modify,contosoad\Finance,C:\File_Share\Finance\,2,2,0,FALSE
+Modify,contosoad\Human Resources,C:\File_Share\Human Resources\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Information Technology\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\IT Support\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Logistics\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Marketing\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Operations\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Payroll\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Public Relations\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Purchasing\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Recruitment\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Research and Development\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Sales\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Service Desk Operators\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Strategic Information Systems\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Strategic Marketing\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Strategic Sourcing\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Telesales\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\tier2admins\,2,2,0,FALSE
+Modify,contosoad,C:\File_Share\Training\,2,2,0,FALSE
