@@ -18,32 +18,7 @@ Configuration DcConfig
 	Import-DscResource -ModuleName PSDscResources
 	Import-DscResource -ModuleName ActiveDirectoryDsc
 
-	$groupList = @(
-		"Logistics",
-		"Information Technology",
-		"IT Support",
-		"Strategic Information Systems",
-		"Data Entry",
-		"Research and Development",
-		"Strategic Sourcing",
-		"Purchasing",
-		"Operations",
-		"Public Relations",
-		"Corporate Communications",
-		"Advertising Market Research",
-		"Strategic Marketing",
-		"Customer Service",
-		"Telesales",
-		"Account Management",
-		"Marketing",
-		"Sales",
-		"Payroll",
-		"Recruitment",
-		"Training",
-		"Human Resource",
-		"Accounting",
-		"Finance"
-	)
+	
 
 	Node 'localhost'
 	{             
@@ -105,19 +80,6 @@ Configuration DcConfig
 			Path="OU=Groups,dc=$($NetBiosDomainname),dc=com"
 			Ensure = "Present"
 			DependsOn =   '[ADOrganizationalUnit]GroupsOU'
-		}
-
-		foreach ($group in $groupList) {
-			ADGroup $group
-			{
-				GroupName = $group
-				DisplayName = $group
-				GroupScope = "Global"
-				Category = "Security"
-				Path = "OU=Security Groups,OU=Groups,dc=$($NetBiosDomainname),dc=com"
-				Ensure = "Present"
-				Dependson  = '[ADOrganizationalUnit]SecurityGroupsOU'
-			}
 		}
 		Script SetForwarders {
 			TestScript = 

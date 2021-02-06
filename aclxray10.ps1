@@ -32,7 +32,7 @@ Sets deployment region (Default 'eastus')
 .PARAMETER    rg
 Sets Resource Group name.
 .PARAMETER    shutdownTimeZone
-Sets time zone for shutdown schedduler and a local time zone for servers. (Default 'EasternTime Zone')
+Sets time zone for shutdown schedduler and a local time zone for servers. (Default 'Eastern Time Zone')
 .PARAMETER    vnetname
 Name of the VNET for the lab. (Default 'ACLXRAYlabvnet')
 .PARAMETER   containerName
@@ -79,10 +79,10 @@ if ($VerbosePreference -ne 'Continue') {
 }
 Write-Information "Running in non-verbose mode"
 
-$currentUser = (Get-AzContext).account.id.Split("@")[0] 
+$currentUser = Get-AzContext
 if ([string]::IsNullOrEmpty($currentUser)) {
   Login-AzAccount
-  $currentUser = (Get-AzContext).account.id.Split("@")[0] 
+  $currentUser = Get-AzContext
 
 }
 #region Public IP address
@@ -100,7 +100,7 @@ Write-Host "Your current public IP address is: $($currentPublicIP)"
 #endregion
 #Region verifying deployimnet subscription
 $title = 'ACLXRAY Lab deployment'
-$message = "You are about to deploy 4 VMs into subscription ""$($currentContext.Subscription.Name)""`nDo you want to proceed?"
+$message = "You are about to deploy 4 VMs into subscription ""$($currentUser.Subscription.Name)""`nDo you want to proceed?"
 $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes"
 $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No"
 $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
@@ -152,7 +152,8 @@ else {
 }
 $randomprefix = get-random -Minimum 1000 -Maximum 10000000
 Write-Host "Generated random prefix $($randomprefix)"
-$dnsName = "aclxray$($currentUser.Tolower())$($randomprefix)"
+$dnsName = "aclxray$($currentUser.account.id.Split("@")[0].Tolower())$($randomprefix)"
+Write-Host "Generated DNS name for the Loadblancer $($dnsName)"
 #create storage account
 $storageAccountName = 'aclxray' + $randomprefix
 Write-Host "Creating storage account name $($storageAccountName)"
@@ -212,5 +213,5 @@ $deployResults = New-AzResourceGroupDeployment @DeployParameters -Verbose
 
 if ($deployResults.ProvisioningState -eq "Succeeded") {
   $rdpFQDN = $deployResults.Outputs.Values[0].Value.ToString()
-  Write-Host "ACLXRAYLAB privisoning is succeffull`nTo access servers use following addresses for eachserver`nCONTOSODC1: $($rdpFQDN):2400`nCONTOSOFS1: $($rdpFQDN):2401`nFANRIKAMDC1: $($rdpFQDN):2400`nFANRIKAMFS1: $($rdpFQDN):2501" -ForegroundColor Cyan
+  Write-Host "ACLXRAYLAB privisoning is succeffull`nTo access servers use following addresses for each server`nCONTOSODC1: $($rdpFQDN):2400`nCONTOSOFS1: $($rdpFQDN):2401`nFANRIKAMDC1: $($rdpFQDN):2400`nFANRIKAMFS1: $($rdpFQDN):2501" -ForegroundColor Cyan
 }

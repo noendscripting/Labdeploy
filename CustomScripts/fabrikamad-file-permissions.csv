@@ -1,4 +1,4 @@
-FileSystemRights,IdenitylRefrence,TargetPath,InheritanceFlags,PropagationFlags,AccessControlType,File
+FileSystemRights,IdentitylRefrence,TargetPath,InheritanceFlags,PropagationFlags,AccessControlType,File
 Modify,grp-Fabrikam-local-8,C:\File_Share\Logistics\,0,0,1,FALSE
 Write,grp-Fabrikam-local-9,C:\File_Share\Logistics\,2,2,1,FALSE
 Modify,grp-Fabrikam-local-5,C:\File_Share\Logistics\3yfkj3uu.mov,,,0,TRUE
@@ -178,3 +178,29 @@ FullControl,grp-Fabrikam-local-12,C:\File_Share\Service Desk Operators\5rfndfht.
 Traverse,grp-Fabrikam-local-8,C:\File_Share\Service Desk Operators\ogbz4ddp.mpeg3,,,1,TRUE
 Modify,grp-Fabrikam-local-9,C:\File_Share\Service Desk Operators\e4edcmxi.wma,,,0,TRUE
 FullControl,746731,C:\File_Share\Service Desk Operators\lapr31qw.doc,,,0,TRUE
+Modify,Account Management,C:\File_Share\Account Management\,2,2,0,FALSE
+Modify,Accounting,C:\File_Share\Accounting\,2,2,0,FALSE
+Modify,Advertising Market Research,C:\File_Share\Advertising Market Research\,2,2,0,FALSE
+Modify,Corporate Communications,C:\File_Share\Corporate Communications\,2,2,0,FALSE
+Modify,Customer Service,C:\File_Share\Customer Service\,2,2,0,FALSE
+Modify,Data Entry,C:\File_Share\Data Entry\,2,2,0,FALSE
+Modify,Finance,C:\File_Share\Finance\,2,2,0,FALSE
+Modify,Human Resources,C:\File_Share\Human Resources\,2,2,0,FALSE
+Modify,Information Technology,C:\File_Share\Information Technology\,2,2,0,FALSE
+Modify,IT Support,C:\File_Share\IT Support\,2,2,0,FALSE
+Modify,Logistics,C:\File_Share\Logistics\,2,2,0,FALSE
+Modify,Marketing,C:\File_Share\Marketing\,2,2,0,FALSE
+Modify,Operations,C:\File_Share\Operations\,2,2,0,FALSE
+Modify,Payroll,C:\File_Share\Payroll\,2,2,0,FALSE
+Modify,Public Relations,C:\File_Share\Public Relations\,2,2,0,FALSE
+Modify,Purchasing,C:\File_Share\Purchasing\,2,2,0,FALSE
+Modify,Recruitment,C:\File_Share\Recruitment\,2,2,0,FALSE
+Modify,Research and Development,C:\File_Share\Research and Development\,2,2,0,FALSE
+Modify,Sales,C:\File_Share\Sales\,2,2,0,FALSE
+Modify,Service Desk Operators,C:\File_Share\Service Desk Operators\,2,2,0,FALSE
+Modify,Strategic Information Systems,C:\File_Share\Strategic Information Systems\,2,2,0,FALSE
+Modify,Strategic Marketing,C:\File_Share\Strategic Marketing\,2,2,0,FALSE
+Modify,Strategic Sourcing,C:\File_Share\Strategic Sourcing\,2,2,0,FALSE
+Modify,Telesales,C:\File_Share\Telesales\,2,2,0,FALSE
+Modify,tier2admins,C:\File_Share\tier2admins\,2,2,0,FALSE
+Modify,Training,C:\File_Share\Training\,2,2,0,FALSE

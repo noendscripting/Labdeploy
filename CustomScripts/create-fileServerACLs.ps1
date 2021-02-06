@@ -30,7 +30,7 @@ function write-log {
 function set-CustomACLs {
     param(
         [string]$TargetPath,
-        [string]$IdenitylRefrence,
+        [string]$IdentitylRefrence,
         [string]$FileSystemRights,
         [string]$InheritanceFlags,
         [string]$PropagationFlags,
@@ -41,10 +41,10 @@ function set-CustomACLs {
     $acl = Get-Acl $TargetPath
 
     if ($file) {
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $AccessControlType)
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdentitylRefrence, $FileSystemRights, $AccessControlType)
     }
     else {
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdentitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
     }
         
     $acl.SetAccessRule($accessRule)
@@ -110,13 +110,15 @@ forEach ($target in $filesystemData) {
 
 #endregion
 #region Create permisisons on directories and files
+
+write-log "Setting permissions on files and directories"
 $aclData = import-csv "$($scriptRoot)\$($domainName)-file-permissions.csv"
 
 foreach ($aclEntry in $aclData) {
 
     $customACLParams = @{
         "TargetPath"        = $aclEntry.targetPath
-        "IdenitylRefrence"  = "$($domainName)\$($aclEntry.IdenitylRefrence)"
+        "IdentitylRefrence"  = "$($domainName)\$($aclEntry.IdentitylRefrence)"
         "FileSystemRights"  = $aclEntry.FileSystemRights
         "InheritanceFlags"  = $aclEntry.InheritanceFlags
         "PropagationFlags"  = $aclEntry.PropagationFlags

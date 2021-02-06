@@ -217,6 +217,9 @@ foreach ($group in $groupData) {
     New-ADGroup $group.GroupName -SamAccountName $group.GroupName -DisplayName $group.GroupName -GroupScope $group.Type -GroupCategory Security -Path $groupsOU
     write-log "Created $($group.Type) group $($group.GroupName)" -severity SUCCESS
 }
+#adding descriotion to Security Groups OU to indicate all groups were added succesfullt
+
+Set-ADOrganizationalUnit -Identity $groupsOU -Description "Business Security Groups"
 write-log "Getting list of created groups"
 $groups = get-adgroup -filter * -SearchBase $groupsOU
 write-log "Getting list of department groups"
@@ -250,15 +253,15 @@ forEach ($trustTarget in $trustTargetList) {
     $remoteCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$($remoteuser)@$($trustTareget)", (ConvertTo-SecureString $remotePassword -AsPlainText -Force)
     $i = 1
     Do {
-        write-log "Verifying domain is online $($trustTarget) domain. Attempt number $($i)" 
-        $domaindata = Get-ADDomain -Server $trustTarget -Credential $remoteCredentials 
+        write-log "Verifying group creation completed on $($trustTarget) domain. Attempt number $($i)" 
+        $ouDescription = (Get-ADOrganizationalUnit -Filter 'ou -eq "Security Groups"' -Server $trustTarget -Credential $remoteCredentials -Properties description).description
         $i++
-        if (!($domaindata)) {
+        if (!($ouDescription -eq 'Business Security Groups')) {
             start-sleep -Seconds 60
         }
-    } until ($domaindata -or $i -eq 21)
-    if (!($domaindata)) {
-        throw "Unable to get a list of groups from $($trustTarget) domain"
+    } until ($ouDescription -eq 'Business Security Groups' -or $i -eq 21)
+    if (!($ouDescription -eq 'Business Security Groups')) {
+        throw "Unable to confirm group creation completed on $($trustTarget) domain"
         exit
     }
     write-log "Confirmed domain $($trustTarget) is available" -severity SUCCESS
@@ -277,7 +280,7 @@ forEach ($trustTarget in $trustTargetList) {
 
 }
 #endregion
-#region create sysvol files and folders gives random
+#region create sysvol files and folders and set up permisisons
 write-log "Creating deparment login script and assign permissions from generic groups"
 
 foreach ($group in $departmentGroups) {
