@@ -12,16 +12,14 @@ The deployment will create:
 * Storage Account
 * 4 VM
 * Shutdown schedule for each VM to save costs
-* Azure Loadblancer with NAT tranlation for RDP
+* Azure Loadbalancer with NAT translation for RDP
 * Public IP addresses for Load Balancer
 * Two forests
 * File server attached to each forest
 * Users in each forest
-* Randomly generated groups with random memberships
-* Random ACLs on OUs and files  
+* Groups and  memberships, including cross forest
+* ACLs on OUs, folders and files  
 * Four accounts with SID history entries
-
-> :warning: **WARNING**: Because all groups and ACLs are created randomly, if you delete and re-deploy lab you will have diffirent settings. SupportFiles folder has two scripts that can help with creating disk snapshots of each VM and then creating a new lab VMs from snapshot if you want to roll back changes. Scripts are provided as is
 
 ### Deployment diagram
 
@@ -70,12 +68,12 @@ In this example we will deploy ACLXRAY Lab into aletrnative region with aleterna
 
 =======
 '''pwsh
-./aclzray.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
+./aclxray11.ps1 -RG myACLXRAYLAB -region westus -shutdownTimeZone 'Pacific Standard Time -vnetname VNET02
 '''
 
 ## Accessing Lab
 
-Due to security concerns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadblancer with NAT translation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadblancer will have randomly assigned DNS name which can be used to access VMs via RDP. There are two main ways to access servers via RDP
+Due to security concerns and to save costs VMs are no longer assigned public IP addresss. Instead a public Loadbalancer with NAT translation is created and each vm can be reached with RDP client using designated ports. Public Ip of the loadbalancer will have randomly assigned DNS name which can be used to access VMs via RDP. DNS name and ports will be publshed at the end of the script or you can look it up by checking LoadBalancer's  public IP address
 RDP access is protected by Network Security Group ACLXRAY-NSG . NSG rule will allow RDP access from your public IP address (collected at the time deployment sripts runs). If your public IP changes you will need to update NSG rule manually.
 
 ### Using aclxray script output
