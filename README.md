@@ -48,7 +48,7 @@ The deployment will create:
 1. Open Powershell terminal or use previously opened terminal
 2. Using powershell command navigate to the root of the directory containing source files
 3. In the same terminal run Login-AzAccount and follow steps to log in to Azure  
-4. Run ./aclray10.ps1 to deploy the lab with default settings and enter name of Resource Group, to be used for deployment, when prompted.
+4. Run ./aclray11.ps1 to deploy the lab with default settings and enter name of Resource Group, to be used for deployment, when prompted.
 
 ### Deploy with custom settings
 

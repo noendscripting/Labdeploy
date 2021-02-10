@@ -167,21 +167,21 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2400",
           "sku": "2012-R2-Datacenter",
-          "domainName": "contosoad.com",
-          "NetBiosDomainname": "contosoad",
+          "domainName": "contoso.local",
+          "NetBiosDomainname": "contoso",
           "ForwarderIPaddress": "[variables('fabrikamDNSServerIP')]",
-          "ForwarderDomain": "fabrikamad.com",
+          "ForwarderDomain": "fabrikam.local",
           "user": "[parameters('AdminUserName')]",
           "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
           "script": "[variables('DscConfigurationScript')]",
           "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-users.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-groups.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-managers.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-fp-groups.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-users.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-managers.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-fp-groups.csv', parameters('_artifactsLocationSasToken'))]",
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/DSInternals_v4.4.1.zip', parameters('_artifactsLocationSasToken'))]"
           ]
 
@@ -193,21 +193,21 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2500",
           "sku": "2016-Datacenter",
-          "domainName": "fabrikamad.com",
-          "NetBiosDomainname": "fabrikamad",
+          "domainName": "fabrikam.local",
+          "NetBiosDomainname": "fabrikam",
           "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
-          "ForwarderDomain": "contosoad.com",
+          "ForwarderDomain": "contoso.local",
           "user": "[parameters('AdminUserName')]",
           "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
           "script": "[variables('DscConfigurationScript')]",
           "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-users.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-groups.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-managers.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-fp-groups.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-users.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-managers.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-fp-groups.csv', parameters('_artifactsLocationSasToken'))]"
 
 
           ]
@@ -218,13 +218,13 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2401",
           "sku": "2016-Datacenter",
-          "domainName": "contosoad.com",
-          "user": "[concat('contosoad\\',parameters('AdminUserName'))]",
+          "domainName": "contoso.local",
+          "user": "[concat('contoso\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomFSScriptScriptFileName')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contosoad-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
           ]
         },
         {
@@ -233,13 +233,13 @@
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2501",
           "sku": "2019-Datacenter",
-          "domainName": "fabrikamad.com",
-          "user": "[concat('fabrikamad\\',parameters('AdminUserName'))]",
+          "domainName": "fabrikam.local",
+          "user": "[concat('fabrikam\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomFSScriptScriptFileName')]",
           "CustomScriptURis": [
             "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikamad-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
           ]
         }
 

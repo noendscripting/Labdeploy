@@ -254,7 +254,7 @@ forEach ($trustTarget in $trustTargetList) {
     $i = 1
     Do {
         write-log "Verifying group creation completed on $($trustTarget) domain. Attempt number $($i)" 
-        $ouDescription = (Get-ADOrganizationalUnit -Filter 'ou -eq "Security Groups"' -Server $trustTarget -Credential $remoteCredentials -Properties description).description
+        $ouDescription = (Get-ADOrganizationalUnit -Filter 'ou -eq "Security Groups"' -Server $trustTarget -Credential $remoteCredentials -Properties description -ErrorAction SilentlyContinue).description
         $i++
         if (!($ouDescription -eq 'Business Security Groups')) {
             start-sleep -Seconds 60
@@ -293,7 +293,7 @@ foreach ($group in $departmentGroups) {
 }
 #endregion
 #region SID history
-if ($domainFQDN -eq "fabrikamad.com") {
+if ($domainFQDN -eq "fabrikam.local") {
     write-log "Completed customization of domain $($domainFQDN) successfully. Exiting" -severity SUCCESS
     exit
 }

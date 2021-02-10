@@ -54,14 +54,14 @@ Configuration DcConfig
 		ADOrganizationalUnit UserAccountsOU
 		{
 			Name="User Accounts"
-			Path="dc=$($NetBiosDomainname),dc=com"
+			Path="dc=$($NetBiosDomainname),dc=local"
 			Ensure = "Present"
 			DependsOn = '[WaitForADDomain]LocalForestWait'
 		}
 		ADOrganizationalUnit EnabledUsersOU
 		{
 			Name="Enabled Users"
-			Path="OU=User Accounts,dc=$($NetBiosDomainname),dc=com"
+			Path="OU=User Accounts,dc=$($NetBiosDomainname),dc=local"
 			Ensure = "Present"
 			DependsOn =   '[ADOrganizationalUnit]UserAccountsOU'
 		}
@@ -70,14 +70,14 @@ Configuration DcConfig
 		ADOrganizationalUnit GroupsOU
 		{
 			Name="Groups"
-			Path="dc=$($NetBiosDomainname),dc=com"
+			Path="dc=$($NetBiosDomainname),dc=local"
 			Ensure = "Present"
 			DependsOn =   '[WaitForADDomain]LocalForestWait'
 		}
 		ADOrganizationalUnit SecurityGroupsOU
 		{
 			Name="Security Groups"
-			Path="OU=Groups,dc=$($NetBiosDomainname),dc=com"
+			Path="OU=Groups,dc=$($NetBiosDomainname),dc=local"
 			Ensure = "Present"
 			DependsOn =   '[ADOrganizationalUnit]GroupsOU'
 		}
