@@ -154,7 +154,7 @@ else {
 $randomprefix = get-random -Minimum 1000 -Maximum 10000000
 Write-Host "Generated random prefix $($randomprefix)"
 $dnsName = "aclxray$($currentUser.account.id.Split("@")[0].Tolower())$($randomprefix)"
-Write-Host "Generated DNS name for the Loadblancer $($dnsName)"
+Write-Host "Generated DNS name for the Loadbalancer $($dnsName)"
 #create storage account
 $storageAccountName = 'aclxray' + $randomprefix
 Write-Host "Creating storage account name $($storageAccountName)"
@@ -211,8 +211,3 @@ $DeployParameters = @{
 
 
 $deployResults = New-AzResourceGroupDeployment @DeployParameters -Verbose
-
-if ($deployResults.ProvisioningState -eq "Succeeded") {
-  $rdpFQDN = $deployResults.Outputs.Values[0].Value.ToString()
-  Write-Host "ACLXRAYLAB privisoning is succeffull`nTo access servers use following addresses for each server`nCONTOSODC1: $($rdpFQDN):2400`nCONTOSOFS1: $($rdpFQDN):2401`nFANRIKAMDC1: $($rdpFQDN):2400`nFANRIKAMFS1: $($rdpFQDN):2501" -ForegroundColor Cyan
-}

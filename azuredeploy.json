@@ -232,7 +232,7 @@
           "subnetRef": "[variables('subnetRef')[1]]",
           "vmSize": "[parameters('virtualMachineSize')]",
           "inboundRDP": "2501",
-          "sku": "2019-Datacenter",
+          "sku": "2019-Datacenter", //2019-Datacenter-Core
           "domainName": "fabrikam.local",
           "user": "[concat('fabrikam\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomFSScriptScriptFileName')]",
@@ -246,7 +246,6 @@
       ]
     },
     "NSGname": "ACLXRAY-NSG",
-    "availabilitySetname": "aclxraySet",
     "vnetSubnetName": [
       "contoso-Subnet",
       "fabrikam-Subnet"
@@ -256,13 +255,6 @@
     "subnetRef": [
       "[concat(variables('vnetId'), '/subnets/', variables('vnetSubnetName')[0])]",
       "[concat(variables('vnetId'), '/subnets/', variables('vnetSubnetName')[1])]"
-    ],
-    "privateNICName": [
-      "[concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[2].virtualMachineName,'NIC')]",
-      "[concat(variables('VMBuildParams').params[3].virtualMachineName,'NIC')]"
-
     ],
     "VnetIpArray": "[split(variables('VirtualNetworkIPPrefix'),'.')]",
     "contosoSubnetIpPrefix": "[concat(variables('VnetIpArray')[0],'.',variables('VnetIpArray')[1],'.0.0/24')]",
@@ -275,18 +267,34 @@
     "DscConfigurationFunction": "DcConfig",
     "CustomScriptScriptFolder": "CustomScripts",
     "CustomDCScriptScriptFileName": "create-usersGroupsACLs.ps1",
-    "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1",
-    "loadBalancername": "aclxrayLabLB",
-    "loadBalancerPublicIpName": "aclxraylabLBPIP"
+    "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1"
 
   },
   "resources": [
+  //Public IP LOOP
+    {
+      "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'publicIP')]",
+      "Type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIP-Loop"
+      },
+      "Properties": {
+        "publicIpAllocationMethod": "Dynamic"
+
+      },
+      "copy": {
+        "name": "PublicIPCopy",
+        "count": "[length(variables('VMBuildParams').params)]"
+      }
+    },
 
     // NSG Contoso
     {
       "comments": "# NSG",
       "name": "[variables('NSGName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -311,107 +319,14 @@
       }
     },
     
-    // Availability Set
-    {
-      "name": "[variables('availabilitySetname')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2018-10-01",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "DisplayName": "Avaialability Set"
-      },
-      "properties": {
-        "platformUpdateDomainCount": 2,
-        "platformFaultDomainCount": 2
-      },
-      "sku": {
-        "name": "Aligned"
-      }
-    },
-    //Public IP for Load balancer
-    {
-      "name": "[variables('loadBalancerPublicIpName')]",
-      "Type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2020-06-01",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "PublicIP-LoadBalancer"
-      },
-      "Properties": {
-        "publicIpAllocationMethod": "Static",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsName')]"
-        }
-      }
-    },
-    // Loadbalancer for NAT
-    {
-      "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2020-05-01",
-      "name": "[variables('loadBalancername')]",
-      "location": "eastus",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
-      ],
-      "tags": {
-        "DisplayName": "LoadBalancer"
-      },
-      "sku": {
-        "name": "Basic"
-      },
-      "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "LoadBalancerFrontEnd",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
-              },
-              "privateIPAddressVersion": "IPv4"
-            }
-          }
-        ],
-        "backendAddressPools": [],
-        "loadBalancingRules": [],
-        "probes": [],
-        "inboundNatRules": [
-
-        ],
-        "inboundNatPools": []
-      }
-    },
-    // Load Balancer inbound NAT Loop
-    {
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "apiVersion": "2020-05-01",
-      "name": "[concat(variables('loadBalancername'), '/',variables('VMBuildParams').params[copyIndex()].virtualMachineName)]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancername'))]"
-      ],
-      "properties": {
-        "frontendIPConfiguration": {
-          "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancername')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
-        },
-        "frontendPort": "[variables('VMBuildParams').params[copyIndex()].inboundRDP]",
-        "backendPort": 3389,
-        "enableFloatingIP": false,
-        "idleTimeoutInMinutes": 10,
-        "protocol": "Tcp",
-        "enableTcpReset": false
-      },
-      "copy": {
-        "count": "[length(variables('VMBuildParams').params)]",
-        "name": "inboundNatLoop"
-      }
-    },
+   
     
     //VNET Settings
     {
       "name": "[parameters('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2020-05-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
        
@@ -430,33 +345,33 @@
           {
             "name": "[variables('vnetSubnetName')[0]]",
             "properties": {
-              "addressPrefix": "[variables('contosoSubnetIpPrefix')]"
-            },
-            "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
+              "addressPrefix": "[variables('contosoSubnetIpPrefix')]",
+              "networkSecurityGroup": {
+                "id":"[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGname'))]"
+              }
             }
           },
           {
             "name": "[variables('vnetSubnetName')[1]]",
             "properties": {
-              "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]"
-            },
-            "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGName'))]"
+              "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]",
+              "networkSecurityGroup":  {
+                "id":"[resourceId('Microsoft.Network/networkSecurityGroups',variables('NSGname'))]"
+              }
             }
 
           }
         ]
       }
-    },
+    } ,
     //Forest DC NIC LOOP
     {
-      "name": "[variables('privateNICName')[copyIndex()]]",
+      "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'NIC')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "inboundNatLoop",
+        "PublicIPCopy",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ],
       "tags": {
@@ -473,11 +388,9 @@
               },
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[copyIndex()].virtualMachineName)]"
-                }
-              ]
+              "publicIPAddress": {
+                "id":"[resourceId('Microsoft.Network/publicIpAddresses',concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'publicIP'))]"
+              }
             }
           }
         ]
@@ -491,12 +404,12 @@
 
     //File Server NIC LOOP
     {
-      "name": "[variables('privateNICName')[add(copyIndex(),2)]]",
+      "name": "[concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'NIC')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "inboundNatLoop",
+        "PublicIPCopy",
         "ForestBuild",
         "[concat('Microsoft.Resources/deployments/','set-VNET-DNS')]"
       ],
@@ -513,11 +426,9 @@
                 "id": "[variables('VMBuildParams').params[add(copyIndex(),2)].subnetRef]"
               },
               "privateIPAllocationMethod": "Dynamic",
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules',variables('loadBalancername'),variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName)]"
-                }
-              ]
+              "publicIPAddress":  {
+                "id":"[resourceId('Microsoft.Network/publicIpAddresses',concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'publicIP'))]"
+              }
             }
           }
         ] 
@@ -535,16 +446,12 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[0])]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC'))]"
       ],
       "tags": {
         "displayName": "CONTOSOAD-DC"
       },
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
-        },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[0].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -578,7 +485,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[0])]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VMBuildParams').params[0].virtualMachineName,'NIC'))]"
             }
           ]
 
@@ -596,18 +503,14 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[1])]",
-        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines',variables('VMBuildParams').params[0].virtualMachineName)]"
 
       ],
       "tags": {
         "displayName": "FABRIKAMAD-DC"
       },
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
-        },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[1].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -643,7 +546,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[1])]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VMBuildParams').params[1].virtualMachineName,'NIC'))]"
             }
           ]
 
@@ -711,17 +614,13 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('privateNICName')[add(copyIndex(),2)])]",
-        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'NIC'))]"
 
       ],
       "tags": {
         "displayName": "File Server Loop"
       },
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
-        },
         "osProfile": {
           "computerName": "[variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -755,7 +654,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('privateNICName')[add(copyIndex(),2)])]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'NIC'))]"
             }
           ]
 
@@ -951,10 +850,6 @@
     }
   ],
   "outputs": {
-    "rdpDNS": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('loadBalancerPublicIpName'))).dnsSettings.fqdn]"
-    }
 
   }
 }
