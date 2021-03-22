@@ -153,8 +153,6 @@ else {
 }
 $randomprefix = get-random -Minimum 1000 -Maximum 10000000
 Write-Host "Generated random prefix $($randomprefix)"
-$dnsName = "aclxray$($currentUser.account.id.Split("@")[0].Tolower())$($randomprefix)"
-Write-Host "Generated DNS name for the Loadbalancer $($dnsName)"
 #create storage account
 $storageAccountName = 'aclxray' + $randomprefix
 Write-Host "Creating storage account name $($storageAccountName)"
@@ -204,7 +202,6 @@ $DeployParameters = @{
   "_artifactsLocation"         = $ArtifactLocation
   "_artifactsLocationSasToken" = $artifactSASTokenSecure 
   "DCConfigArchiveFileName"    = $DSConfigFile
-  "dnsname"                    = $dnsName
   "currentPublicIp"            = $currentPublicIP
 
 }

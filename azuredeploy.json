@@ -151,9 +151,6 @@
     },
     "DCConfigArchiveFileName": {
       "type": "string"
-    },
-    "dnsName": {
-      "type": "string"
     }
   },
 
@@ -267,7 +264,10 @@
     "DscConfigurationFunction": "DcConfig",
     "CustomScriptScriptFolder": "CustomScripts",
     "CustomDCScriptScriptFileName": "create-usersGroupsACLs.ps1",
-    "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1"
+    "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1",
+    "identityName":"aclxrayLabId",
+    "bootstrapRoleAssignmentId": "[guid(concat(resourceGroup().id, 'contributor'))]",
+    "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
 
   },
   "resources": [
@@ -289,7 +289,6 @@
         "count": "[length(variables('VMBuildParams').params)]"
       }
     },
-
     // NSG Contoso
     {
       "comments": "# NSG",
@@ -318,7 +317,35 @@
         ]
       }
     },
-    
+    // Create Managed Identity
+      {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "[variables('identityName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "aclxrayID"
+      }
+    },
+    //Assign Contributor Role to Managed Identity
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2018-09-01-preview",
+      "name": "[variables('bootstrapRoleAssignmentId')]",
+      "tags":{
+        "displayName":"AssignPremisions"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), '2018-11-30').principalId]",
+        "scope": "[resourceGroup().id]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+   // Run Script Deployment to set DNS
    
     
     //VNET Settings
@@ -386,8 +413,8 @@
               "subnet": {
                 "id": "[variables('VMBuildParams').params[copyIndex()].subnetRef]"
               },
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
+              "privateIPAllocationMethod": "Dynamic",
+              //"privateIPAddress": "[variables('VMBuildParams').params[copyIndex()].CustomIPAddress]",
               "publicIPAddress": {
                 "id":"[resourceId('Microsoft.Network/publicIpAddresses',concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'publicIP'))]"
               }
@@ -397,7 +424,7 @@
 
       },
       "copy": {
-        "name": "ForestBuild",
+        "name": "NICBuild",
         "count": 2
       }
     },
@@ -410,8 +437,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "PublicIPCopy",
-        "ForestBuild",
-        "[concat('Microsoft.Resources/deployments/','set-VNET-DNS')]"
+        "DCDSCLoop"
       ],
       "tags": {
         "displayName": "File Server NIC Loop"
@@ -557,6 +583,7 @@
         
       ]
     },
+    //Domain Controllers DCS loop
     {
           "name": "[concat(variables('VMBuildParams').params[copyIndex()].virtualMachineName,'/',variables('VMBuildParams').params[copyIndex()].NetBiosDomainname,'-DSC-ForestBuild')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -614,7 +641,8 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'NIC'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('VMBuildParams').params[add(copyIndex(),2)].virtualMachineName,'NIC'))]",
+        "[resourceId('Microsoft.Resources/deploymentScripts','CustomDNS')]"
 
       ],
       "tags": {
@@ -794,60 +822,34 @@
       }
 
     },
-    //Setting DNS on the VNET
+  //Setting DNS on the VNET
     {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
-      "name": "set-VNET-DNS",
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "CustomDNS",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
-        "DCDSCLoop"
+        "[resourceId('Microsoft.Authorization/roleAssignments', variables('bootstrapRoleAssignmentId'))]",
+         "DCDSCLoop"
       ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": [
-            {
-              "name": "[parameters('virtualNetworkName')]",
-              "type": "Microsoft.Network/virtualNetworks",
-              "location": "[resourceGroup().location]",
-              "apiVersion": "2018-08-01",
-              "tags": { "DisplayName": "VNET" },
-              "properties": {
-                "addressSpace": {
-                  "addressPrefixes": [
-                    "[variables('VirtualNetworkIPPrefix')]"
-                  ]
-                },
-                "subnets": [
-                  {
-                    "name": "[variables('vnetSubnetName')[0]]",
-                    "properties": {
-                      "addressPrefix": "[variables('contosoSubnetIpPrefix')]"
-                    }
-                  },
-                  {
-                    "name": "[variables('vnetSubnetName')[1]]",
-                    "properties": {
-                      "addressPrefix": "[variables('fabrikamSubnetIpPrefix')]"
-                    }
-
-                  }
-                ],
-                "dhcpOptions": {
-                  "dnsServers": [
-                    "[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','4')]",
-                    //"[concat(variables('contosoSubnetIPArray')[0],'.',variables('contosoSubnetIPArray')[1],'.',variables('contosoSubnetIPArray')[2],'.','5')]",
-                    "[concat(variables('fabrikamSubnetIPArray')[0],'.',variables('fabrikamSubnetIPArray')[1],'.',variables('fabrikamSubnetIPArray')[2],'.','4')]"
-                  ]
-                }
-              }
-            }
-          ]
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]": {}
         }
+      },
+      
+      "kind": "AzurePowerShell",
+      "properties": {
+        "azPowerShellVersion": "5.0",
+        "timeout": "PT30M",
+        "arguments": "[format(' -resourceGroup {0} -vnetName {1} -dc1 {2} -dc2 {3}', resourceGroup().name, parameters('virtualNetworkName'),variables('VMBuildParams').params[0].virtualMachineName,variables('VMBuildParams').params[1].virtualMachineName)]", // can pass an arguement string, double quotes must be escaped
+        "primaryScriptUri":"[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/set-customdns.ps1', parameters('_artifactsLocationSasToken'))]",
+        "cleanupPreference": "Always",
+        "retentionInterval": "P1D"
       }
     }
+    
   ],
   "outputs": {
 
