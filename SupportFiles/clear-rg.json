@@ -2,48 +2,89 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storageAccount": {
-            "type": "String"
-        }
     },
-    "variables": {},
+    "variables": {
+        "availabilitySetname":"aclxraySet",
+        "loadBalancername":"aclxrayLabLB",
+        "loadBalancerPublicIpName":"aclxraylabLBPIP"
+    },
     "resources": [
         {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
-            "name": "[parameters('storageAccount')]",
+  "name": "[variables('availabilitySetname')]",
+  "type": "Microsoft.Compute/availabilitySets",
+  "apiVersion": "2018-10-01",
+  "location": "[resourceGroup().location]",
+  "tags": {
+    "DisplayName": "Avaialability Set"
+  },
+  "properties": {
+    "platformUpdateDomainCount": 2,
+    "platformFaultDomainCount": 2
+  },
+  "sku": {
+    "name": "Aligned"
+  }
+},
+//Public IP for Load blancer
+    {
+      "name": "[variables('loadBalancerPublicIpName')]",
+      "Type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIP-LoadBalancer"
+      },
+      "Properties": {
+        "publicIpAllocationMethod": "Static",
+        "dnsSettings": {
+      "domainNameLabel": "deleted123"
+    }
+      }
+       
+    },
+    // Loadbalancer for NAT
+    {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('loadBalancername')]",
             "location": "eastus",
+            "dependsOn": [
+              "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
+            ],
             "tags": {
-                "TagCompliance": "Yes"
+              "DisplayName": "LoadBalancer"
             },
             "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
+                "name": "Basic"
             },
-            "kind": "StorageV2",
             "properties": {
-                "networkAcls": {
-                    "bypass": "AzureServices",
-                    "virtualNetworkRules": [],
-                    "ipRules": [],
-                    "defaultAction": "Allow"
-                },
-                "supportsHttpsTrafficOnly": true,
-                "encryption": {
-                    "services": {
-                        "file": {
-                            "keyType": "Account",
-                            "enabled": true
-                        },
-                        "blob": {
-                            "keyType": "Account",
-                            "enabled": true
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('loadBalancerPublicIpName'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
                         }
-                    },
-                    "keySource": "Microsoft.Storage"
-                },
-                "accessTier": "Hot"
+                    }
+                ],
+                "backendAddressPools": [],
+                "loadBalancingRules": [],
+                "probes": [],
+                "inboundNatRules": [
+                    
+                ],
+                "inboundNatPools": []
             }
         }
-    ]
+    ],
+    "outputs": {
+        "name":{
+      "type":"string",
+      "value":"[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('loadBalancerPublicIpName'))).dnsSettings.fqdn]"
+
+    }
+    }
 }

@@ -4,7 +4,6 @@ Configuration DcConfig
 
 	Param
 	(
-		[string]$NodeName = 'localhost',
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[PSCredential]$DomainAdminCredentials,
@@ -16,11 +15,12 @@ Configuration DcConfig
 
 	)
 
-	Import-DscResource -ModuleName PSDscResources 
-	Import-DscResource -ModuleName ComputerManagementDsc
+	Import-DscResource -ModuleName PSDscResources
 	Import-DscResource -ModuleName ActiveDirectoryDsc
 
-	Node $nodeName
+	
+
+	Node 'localhost'
 	{             
 		LocalConfigurationManager {
 			ConfigurationMode    = 'ApplyAndAutoCorrect'
@@ -28,62 +28,58 @@ Configuration DcConfig
 			ActionAfterReboot    = 'ContinueConfiguration'
 			AllowModuleOverwrite = $true
 		}
-		TimeZone TimeZoneExample {
-			isSingleInstance = 'Yes'
-			TimeZone         = $TimeZone
-
-		}
 		WindowsFeatureSet ADDS_Features
 		{
 			Name = @('RSAT-DNS-Server','AD-Domain-Services','RSAT-AD-AdminCenter','RSAT-ADDS','RSAT-AD-PowerShell','RSAT-AD-Tools','RSAT-Role-Tools')
 			Ensure = 'Present'
-		}
-
-		<#WindowsFeature DNS_RSAT { 
-			Ensure = "Present" 
-			Name   = "RSAT-DNS-Server"
-		}
-
-		WindowsFeature ADDS_Install { 
-			Ensure = 'Present' 
-			Name   = 'AD-Domain-Services' 
-		} 
-
-		WindowsFeature RSAT_AD_AdminCenter {
-			Ensure = 'Present'
-			Name   = 'RSAT-AD-AdminCenter'
-		}
-
-		WindowsFeature RSAT_ADDS {
-			Ensure = 'Present'
-			Name   = 'RSAT-ADDS'
-		}
-
-		WindowsFeature RSAT_AD_PowerShell {
-			Ensure = 'Present'
-			Name   = 'RSAT-AD-PowerShell'
-		}
-
-		WindowsFeature RSAT_AD_Tools {
-			Ensure = 'Present'
-			Name   = 'RSAT-AD-Tools'
-		}
-	
-
-		WindowsFeature RSAT_Role_Tools {
-			Ensure = 'Present'
-			Name   = 'RSAT-Role-Tools'
-		}#>
-		
-		
-
-		
+		}	
 		ADDomain CreateForest { 
 			DomainName                    = $DomainName            
 			Credential                    = $DomainAdminCredentials
 			SafemodeAdministratorPassword = $DomainAdminCredentials
 			DomainNetbiosName             = $NetBiosDomainname
 			DependsOn                     = '[WindowsFeatureSet]ADDS_Features'
+		}
+
+		WaitForADDomain LocalForestWait {
+			DomainName              = $DomainName
+			DependsOn               =  '[ADDomain]CreateForest'
+			WaitTimeout             = 3600
+			WaitForValidCredentials = $true
+			Credential              = $DomainAdminCredentials
+			RestartCount            = 5 
+            
+		}
+		#create user OUs
+		ADOrganizationalUnit UserAccountsOU
+		{
+			Name="User Accounts"
+			Path="dc=$($NetBiosDomainname),dc=local"
+			Ensure = "Present"
+			DependsOn = '[WaitForADDomain]LocalForestWait'
+		}
+		ADOrganizationalUnit EnabledUsersOU
+		{
+			Name="Enabled Users"
+			Path="OU=User Accounts,dc=$($NetBiosDomainname),dc=local"
+			Ensure = "Present"
+			DependsOn =   '[ADOrganizationalUnit]UserAccountsOU'
+		}
+
+		#create Group OUs
+		ADOrganizationalUnit GroupsOU
+		{
+			Name="Groups"
+			Path="dc=$($NetBiosDomainname),dc=local"
+			Ensure = "Present"
+			DependsOn =   '[WaitForADDomain]LocalForestWait'
+		}
+		ADOrganizationalUnit SecurityGroupsOU
+		{
+			Name="Security Groups"
+			Path="OU=Groups,dc=$($NetBiosDomainname),dc=local"
+			Ensure = "Present"
+			DependsOn =   '[ADOrganizationalUnit]GroupsOU'
 		}
 		Script SetForwarders {
 			TestScript = 
@@ -115,9 +111,9 @@ Configuration DcConfig
 				Add-DnsServerConditionalForwarderZone -MasterServers $using:ForwarderIPaddress -Name $using:ForwarderDomain
 		  
 			}
-			Dependson  = '[ADDomain]CreateForest'
+			Dependson  = '[WaitForADDomain]LocalForestWait'
 		}
-		WaitForADDomain DscForestWait {
+		WaitForADDomain RemoteForestWait {
 			DomainName              = $ForwarderDomain
 			DependsOn               = '[Script]SetForwarders'
 			WaitTimeout             = 3600
@@ -132,8 +128,8 @@ Configuration DcConfig
 			TargetDomainName     = $ForwarderDomain
 			TargetCredential     = $DomainAdminCredentials
 			TrustType            = "Forest"
-			TrustDirection       = "Bidirectional"
-			Dependson            = '[WaitForADDomain]DscForestWait'
+			TrustDirection       = "Outbound"
+			Dependson            = '[WaitForADDomain]RemoteForestWait'
 			AllowTrustRecreation = $true
 		}
 		

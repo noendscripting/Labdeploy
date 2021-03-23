@@ -21,18 +21,16 @@ function write-log {
         "SUCCESS" { [ConsoleColor]$messageColor = "Green" }
     
     }
-    Write-Host "$($timeStamp) $($severity) $($message)" -ForegroundColor $messageColor
+    Write-Host "$($timeStamp)`t[$($severity)]`t$($message)" -ForegroundColor $messageColor
     if (!([string]::IsNullOrEmpty($logfile))) {
-        write-output "$($timeStamp) $($severity) $($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
+        write-output "$($timeStamp)`t[$($severity)]`t$($message)" | Out-File -FilePath $logfile -Encoding ascii -Append
     }
 }
-
-
 
 function set-CustomACLs {
     param(
         [string]$TargetPath,
-        [string]$IdenitylRefrence,
+        [string]$IdentitylRefrence,
         [string]$FileSystemRights,
         [string]$InheritanceFlags,
         [string]$PropagationFlags,
@@ -43,15 +41,15 @@ function set-CustomACLs {
     $acl = Get-Acl $TargetPath
 
     if ($file) {
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $AccessControlType)
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdentitylRefrence, $FileSystemRights, $AccessControlType)
     }
     else {
-        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdenitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
+        $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($IdentitylRefrence, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
     }
         
     $acl.SetAccessRule($accessRule)
     $acl | Set-Acl $TargetPath
-    write-log "Granted $($FileSystemRights) Permisison to Group $($accessRule.IdentityReference) to $($TargetPath)"
+    write-log "Granted $($FileSystemRights), Permisison to Principal $($accessRule.IdentityReference) to $($TargetPath) InheritanceFlags $($InheritanceFlags) PropagationFlags $($PropagationFlags) AccessControlType $($AccessControlType) " -severity SUCCESS
 
 }
 
@@ -78,81 +76,62 @@ if ($log.Length -ne 0) {
 }
 trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception)" -severity "ERROR"; break; }
 #endregion
-<##region configuring enabling WinRM with certbased auth and configuring firewall
-$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName $env:COMPUTERNAME
-Enable-PSRemoting -SkipNetworkProfileCheck -Force
-New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
-New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
-Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
-#endregion#>
+#region Set .Net to use TLS settings from OS
+write-log "Setting TLS negotiation porperties for .Net 4.x"
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+write-log "Setting TLS negotiation porperties for .Net 2.x"
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+#endregion
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell
 $scriptRoot = split-path $myInvocation.MyCommand.Source -Parent
 $domainData = get-addomain (Get-CimInstance Win32_ComputerSystem).Domain
 $domainName = $domainData.NetbiosName
-write-log "Connected to domain $($domainName)"
+$domainDN = $domainData.distinguishedname
+$groupsOU = "OU=Security Groups,OU=Groups,$($domainDN)"
+write-log "Connected to domain $($domainName)" -severity SUCCESS
 #endregion#>
 
-
-#region set up grouops, file extensions and ACL collections
-$businessGroups = Get-Content "$($scriptRoot)\groups.txt" 
-$domainLocalGroups = get-adgroup -filter 'samaccountname -like "*-local-*"'
-$MultimediaExtensions = ".avi", ".midi", ".mov", ".mp3", ".mp4", ".mpeg", ".mpeg2", ".mpeg3", ".mpg", ".ogg", ".ram", ".rm", ".wma", ".wmv"
-$OfficeExtensions = ".pptx", ".docx", ".doc", ".xls", ".docx", ".doc", ".pdf", ".ppt", ".pptx", ".dot"
-$AllExtensions = $MultimediaExtensions + $OfficeExtensions
-$inheritanceFlagsArray = @(0, 1, 2)
-$propagationFlagsArray = @(0, 1, 2)
-$AccessControlTypeArray = @(0, 1)
-$fileSystemRightsArray = @("FullControl", "Modify", "Write", "Read", "ListDirectory", "Traverse")
+#region set windows firewall settings for logging
+Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True -LogIgnored True
 #endregion
-#region create foleders, shares, files and ACLs
-forEach ($buGroup in $businessGroups) {
-    $targetPath = "C:\File_Share\$($buGroup)\"
-    New-Item $targetPath -type directory
-    write-log "Created business directory $($targetPath)"
-    New-SMBShare -Name $buGroup -Path $targetPath -FullAccess "$($domainName)\$($bugroup)"
-    write-log "Created share $($buGroup) using path $($targetPath)"
-    #selecting ramdom genral groiup and assigning to the newly created folder with random permissions 
-    $domainLocalGroups | Get-random -count (Get-random -Minimum 1 -Maximum 6) | forEach-Object {
-        $customACLParams = @{
-            "TargetPath"        = $targetPath
-            "IdenitylRefrence"  = "$($domainName)\$($psitem.samaccountname)"
-            "FileSystemRights"  = ($fileSystemRightsArray | Get-Random)
-            "InheritanceFlags"  = ($inheritanceFlagsArray | Get-random)
-            "PropagationFlags"  = ($propagationFlagsArray | Get-random)
-            "AccessControlType" = ($AccessControlTypeArray | Get-random)
-            "File"              = $false
 
-        }
-
-        set-CustomACLs @customACLParams
-    }
-    $totalfiles = get-random -Minimum 53 -Maximum 207
-    for ($i = 0; $i -le $totalfiles; $i++) {
-        $fileName = ([System.IO.Path]::GetRandomFileName()).Split('.')[0]
-        $extension = $AllExtensions | Get-Random
-        New-Item "$($targetPath)$($fileName)$($extension)" -type file -Force | Out-Null 
-        write-log "Created ramdom file $($targetPath)$($fileName)$($extension)"
-        Clear-Variable fileName
-        Clear-Variable extension 
-
-    }
-    #selecting random files and assigning random permssions to a random generic group
-    Get-ChildItem $targetPath | Get-Random -Count 3 | ForEach-Object {
-
-        $customACLParams = @{
-            "TargetPath"        = $psitem.FullName
-            "IdenitylRefrence"  = "$($domainName)\$($domainLocalGroups.samaccountname | get-random)"
-            "FileSystemRights"  = ($fileSystemRightsArray | Get-Random)
-            "AccessControlType" = ($AccessControlTypeArray | Get-random)
-            "File"              = $true
-
-        }
-        set-CustomACLs @customACLParams
+#region create folders, shares, files
+$filesystemData = import-csv "$($scriptRoot)\$($domainName)-file-directory.csv"
+forEach ($target in $filesystemData) {
+    
+    New-Item $target.path -type $target.type | Out-Null
+    write-log "Created directory $($target.Path)" -severity SUCCESS
+    if ($target.type -eq 'directory') {
+        New-SMBShare -Name $target.Path.Split("\")[2]  -Path $target.path -FullAccess "$($domainName)\$($target.Path.Split("\")[2])" | Out-Null
+        write-log "Created share $($target.Path.Split("\")[2]) using path $($target.Path)" -severity SUCCESS
     }
 }
+
 #endregion
-#region Grating "" group permissions to start\stop Spooler service
+#region Create permisisons on directories and files
+
+write-log "Setting permissions on files and directories"
+$aclData = import-csv "$($scriptRoot)\$($domainName)-file-permissions.csv"
+
+foreach ($aclEntry in $aclData) {
+
+    $customACLParams = @{
+        "TargetPath"        = $aclEntry.targetPath
+        "IdentitylRefrence"  = "$($domainName)\$($aclEntry.IdentitylRefrence)"
+        "FileSystemRights"  = $aclEntry.FileSystemRights
+        "InheritanceFlags"  = $aclEntry.InheritanceFlags
+        "PropagationFlags"  = $aclEntry.PropagationFlags
+        "AccessControlType" = $aclEntry.AccessControlType
+        "File"              = [System.Convert]::ToBoolean($aclEntry.File)
+
+    }
+    set-CustomACLs @customACLParams
+
+}
+
+    
+#region Granting Service Desk Operators group permissions to start\stop Spooler service
 $operatorsGroupSid = (Get-ADGroup -Identity 'Service Desk Operators').sid
 
 
@@ -170,6 +149,9 @@ $ps.WaitForExit()
 
 If (!($outputData -match "SUCCESS")) {
     Throw  "Adding permissions to spooler server failed with error`n$($outputData)"
+}
+else {
+    write-log "Granted permissions to start\stop spooler to Service Desk Operators group" -severity SUCCESS
 }
 
 #endregion
