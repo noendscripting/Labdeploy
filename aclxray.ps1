@@ -18,11 +18,7 @@
 .DESCRIPTION
   
     This will deploy a new resource group with a new VNET called ACLXRAYlabvnet with IP range 10.6.0.0/24, a new storage account 4 Vms and a Lodablancer with inbound NAT for RDP. The VM names are: contosodc1, contosofs1, fabrikamdc1, fabrikamfs1.
-    all resources are deployed to EASTUS. Script will attempt to identify your public IP address to configure Network Security Group for RDP access. The extrenal port mappings for RDP access are as following:
-    contosodc1: 2400
-    contosofs1: 2401
-    fabrikamdc1: 2500
-    fabrikamfs1: 2501
+    all resources are deployed to EASTUS. Script will attempt to identify your public IP address to configure Network Security Group for RDP access. 
 
 
 .PARAMETER   vmsize
@@ -32,7 +28,7 @@ Sets deployment region (Default 'eastus')
 .PARAMETER    rg
 Sets Resource Group name.
 .PARAMETER    shutdownTimeZone
-Sets time zone for shutdown schedduler and a local time zone for servers. (Default 'Eastern Time Zone')
+Sets time zone for shutdown schedduler and a local time zone for servers. 
 .PARAMETER    vnetname
 Name of the VNET for the lab. (Default 'ACLXRAYlabvnet')
 .PARAMETER   containerName
@@ -66,7 +62,7 @@ Param(
   )
   ]
   [string]$RG,
-  [string]$shutdownTimeZone = 'Eastern Standard Time',
+  [string]$shutdownTimeZone ,
   [string]$shutDownTime = '01:00',
   [string]$vnetname = 'ACLXRAYlabvnet',
   [string]$containerName = "storageartifacts"
@@ -99,6 +95,14 @@ if (![string]::IsNullOrEmpty($errorData)) {
 }
 Write-Host "Your current public IP address is: $($currentPublicIP)"
 #endregion
+
+Write-Host "Identifying your current time zone"
+$currentTimeZone = (Get-TimeZone).id
+if (!($shutdownTimeZone)) {
+  $shutdownTimeZone = $currentTimeZone
+}
+
+Write-Host "Setting lab VMs time zone to $($shutdownTimeZone)"
 #Region verifying deployimnet subscription
 $title = 'ACLXRAY Lab deployment'
 $message = "You are about to deploy 4 VMs into subscription ""$($currentUser.Subscription.Name)""`nDo you want to proceed?"
@@ -208,3 +212,11 @@ $DeployParameters = @{
 
 
 $deployResults = New-AzResourceGroupDeployment @DeployParameters -Verbose
+if ($deployResults.ProvisioningState -eq 'Succeeded') {
+
+  Write-Host "Deleting storage $($storageAccountName)"
+
+  $storageAccount | Remove-AzStorageAccount -Force
+
+  write-host "Completed deploying ACLXRAY lab"
+}
