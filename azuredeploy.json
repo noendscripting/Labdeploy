@@ -137,18 +137,6 @@
         "Line Islands Standard Time"
       ]
     },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-      }
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
-      }
-    },
     "DCConfigArchiveFileName": {
       "type": "string"
     },
@@ -626,7 +614,6 @@
               }
             },
             "protectedSettings": {
-              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
               "configurationArguments": {
                 "DomainAdminCredentials": {
                   "UserName": "[variables('VMBuildParams').params[copyIndex()].user]",
