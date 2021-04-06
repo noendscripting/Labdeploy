@@ -261,7 +261,7 @@
     "identityName":"aclxrayLabId",
     "bootstrapRoleAssignmentId": "[guid(concat(resourceGroup().id, 'contributor'))]",
     "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-    "sourceURI" : "[concat('https://github.com/noendscripting/Labdeploy/blob/',parameters('codeVersion'))]"
+    "sourceURI" : "[concat('https://raw.githubusercontent.com/noendscripting/Labdeploy/',parameters('codeVersion'))]"
 
   },
   "resources": [
