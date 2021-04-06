@@ -188,7 +188,7 @@
           "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
           "ForwarderDomain": "contoso.local",
           "user": "[parameters('AdminUserName')]",
-          "url": "[concat(variables('sourceURI'),'/',parameters('DCConfigArchiveFileName'))]",
+          "url": "[concat(variables('sourceURI'),'/DSC/',parameters('DCConfigArchiveFileName'))]",
           "script": "[variables('DscConfigurationScript')]",
           "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
