@@ -710,7 +710,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[variables('VMBuildParams').params[add(copyIndex(),2)].CustomScriptURis]",
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ',  variables('CustomFSScriptScriptFileName'))]"
         }
       },
       "copy": {
