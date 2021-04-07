@@ -775,7 +775,7 @@
           "fileUris": "[variables('VMBuildParams').params[copyIndex()].CustomScriptURis]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', '/', variables('CustomDCScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomDCScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
         }
       },
       "copy": {
