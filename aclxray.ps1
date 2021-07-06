@@ -49,7 +49,8 @@ Name of the container where uploaded artifacts are going to be stored (Default '
 #This is for internal Microsoft use only
 
 #>
-#Requires -Modules ActiveDirectoryDsc,PSDscResources
+#Requires -Modules @{ ModuleName="ActiveDirectoryDsc"; ModuleVersion="6.0.1"}
+#Requires -Modules @{ ModuleName="PSDscResources"; ModuleVersion="2.12.0.0"}
 
 [CmdletBinding()]
   
