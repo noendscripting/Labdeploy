@@ -40,9 +40,9 @@ Name of the container where uploaded artifacts are going to be stored (Default '
    The script will ask for credentials. These are the credentials for your azure subscription, not the VMs. VM creds are already set.
 
 .NOTES
-  Version:        11.0
+  Version:        12.0
   Author:         Mike Resnick Microsoft
-  Creation Date: 02/11/2021
+  Creation Date: 04/01/2021
 
 
  
@@ -66,7 +66,8 @@ Param(
   [string]$shutdownTimeZone ,
   [string]$shutDownTime = '01:00',
   [string]$vnetname = 'ACLXRAYlabvnet',
-  [string]$containerName = "storageartifacts"
+  [string]$containerName = "storageartifacts",
+  [string]$release = "master"
 
 )
 
@@ -156,6 +157,7 @@ else {
   Write-Host "Creating Resource Group $($RG)"
   New-AzResourceGroup -Name $RG -Location $region -Force
 }
+<#
 $randomprefix = get-random -Minimum 1000 -Maximum 10000000
 Write-Host "Generated random prefix $($randomprefix)"
 #create storage account
@@ -173,9 +175,10 @@ $destSASToken = New-AzStorageContainerSASToken -Context $destcontext -ExpiryTime
 $artifactSASTokenSecure = ConvertTo-SecureString -String $destSASToken -AsPlainText -Force 
 $artifactLocation = "$($destcontext.BlobEndPoint)$($containerName)"
 Write-Verbose "Destination SAA $($destSAStoken)"
+#>
 #endregion
 #region publishing DSC package data
-
+<#
 $DSConfigPath = "$($PSScriptRoot)\DSC\DCConfig.ps1"
 
 
@@ -183,8 +186,10 @@ Write-Host "Publishing DConfig DSC package"
 $DSConfigURI = Publish-AzVMDscConfiguration -ResourceGroupName $RG -ConfigurationPath $DSConfigPath -StorageAccountName $storageAccountName -ContainerName $containerName -Force
 $DSConfigFile = $DSConfigURI.Split("/")[-1]
 Write-Host "Succcessfully published DSC config file $($DSConfigFile)"
+#>
 #endregion
 #region uplaoding custom script extension artifacts
+<#
 Write-Verbose "Artifacts location $($ArtifactLocation)"
 Write-Host "Copying custom script artifacts"
 Get-ChildItem .\CustomScripts | ForEach-Object {
@@ -192,6 +197,7 @@ Get-ChildItem .\CustomScripts | ForEach-Object {
   Set-AzStorageBlobContent -File $_.FullName -Blob $_.FullName.Substring((Get-Item $PSScriptRoot).FullName.Length + 1) -Context $destcontext -Container $containerName -Force | Out-Null
 
 }
+#>
 $templatefile = '.\azuredeploy.json'
 
 
@@ -204,10 +210,9 @@ $DeployParameters = @{
   "virtualNetworkName"         = $vnetname
   "shutdownTimeZone"           = $shutdownTimeZone
   "shutDownTime"               = $shutDownTime
-  "_artifactsLocation"         = $ArtifactLocation
-  "_artifactsLocationSasToken" = $artifactSASTokenSecure 
-  "DCConfigArchiveFileName"    = $DSConfigFile
+  "DCConfigArchiveFileName"    = 'DCConfig.zip'
   "currentPublicIp"            = $currentPublicIP
+  "codeVersion" = $release
 
 }
 
@@ -215,9 +220,9 @@ $DeployParameters = @{
 $deployResults = New-AzResourceGroupDeployment @DeployParameters -Verbose
 if ($deployResults.ProvisioningState -eq 'Succeeded') {
 
-  Write-Host "Deleting storage $($storageAccountName)"
+  <#Write-Host "Deleting storage $($storageAccountName)"
 
-  $storageAccount | Remove-AzStorageAccount -Force
+  $storageAccount | Remove-AzStorageAccount -Force #>
 
   write-host "Completed deploying ACLXRAY lab"
 }

@@ -79,8 +79,10 @@ trap { write-log -message "$($_.Message)`n$($_.ScriptStackTrace)`n$($_.Exception
 #region Set .Net to use TLS settings from OS
 write-log "Setting TLS negotiation porperties for .Net 4.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
 write-log "Setting TLS negotiation porperties for .Net 2.x"
 New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SchUseStrongCrypto' -value '1' -PropertyType 'DWord' -Force | Out-Null
+New-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v2.0.50727' -name 'SystemDefaultTlsVersions' -value '1' -PropertyType 'DWord' -Force | Out-Null
 #endregion
 #region set up domain data
 Add-WindowsFeature RSAT-AD-PowerShell

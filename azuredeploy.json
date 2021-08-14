@@ -137,20 +137,12 @@
         "Line Islands Standard Time"
       ]
     },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-      }
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
-      }
-    },
     "DCConfigArchiveFileName": {
       "type": "string"
+    },
+    "codeVersion": {
+      "type": "string",
+      "defaultValue": "master"
     }
   },
 
@@ -169,17 +161,18 @@
           "ForwarderIPaddress": "[variables('fabrikamDNSServerIP')]",
           "ForwarderDomain": "fabrikam.local",
           "user": "[parameters('AdminUserName')]",
-          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
+          "url": "[concat(variables('sourceURI'),'/DSC/',parameters('DCConfigArchiveFileName'))]",
           "script": "[variables('DscConfigurationScript')]",
           "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-users.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-managers.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-fp-groups.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/DSInternals_v4.4.1.zip', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'))]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-users.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-managers.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-groups-members.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-fp-groups.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/DSInternals_v4.4.1.zip')]"
+            
           ]
 
         },
@@ -195,16 +188,16 @@
           "ForwarderIPaddress": "[variables('contosoDNSServerIP')]",
           "ForwarderDomain": "contoso.local",
           "user": "[parameters('AdminUserName')]",
-          "url": "[concat(parameters('_artifactsLocation'),'/',parameters('DCConfigArchiveFileName'))]",
+          "url": "[concat(variables('sourceURI'),'/DSC/',parameters('DCConfigArchiveFileName'))]",
           "script": "[variables('DscConfigurationScript')]",
           "function": "[variables('DscConfigurationFunction')]",
           "CustomScriptURis": [
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-users.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-managers.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups-members.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-fp-groups.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'))]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-users.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-managers.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-groups-members.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-fp-groups.csv')]"
 
 
           ]
@@ -219,9 +212,9 @@
           "user": "[concat('contoso\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomFSScriptScriptFileName')]",
           "CustomScriptURis": [
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'))]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-directory.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/contoso-file-permissions.csv')]"
           ]
         },
         {
@@ -234,9 +227,9 @@
           "user": "[concat('fabrikam\\',parameters('AdminUserName'))]",
           "CustomScriptFileName": "[variables('CustomFSScriptScriptFileName')]",
           "CustomScriptURis": [
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-directory.csv', parameters('_artifactsLocationSasToken'))]",
-            "[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-permissions.csv', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'))]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-directory.csv')]",
+            "[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/fabrikam-file-permissions.csv')]"
           ]
         }
 
@@ -267,7 +260,8 @@
     "CustomFSScriptScriptFileName": "create-fileServerACLs.ps1",
     "identityName":"aclxrayLabId",
     "bootstrapRoleAssignmentId": "[guid(concat(resourceGroup().id, 'contributor'))]",
-    "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+    "contributorRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "sourceURI" : "[concat('https://raw.githubusercontent.com/noendscripting/Labdeploy/',parameters('codeVersion'))]"
 
   },
   "resources": [
@@ -620,7 +614,6 @@
               }
             },
             "protectedSettings": {
-              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
               "configurationArguments": {
                 "DomainAdminCredentials": {
                   "UserName": "[variables('VMBuildParams').params[copyIndex()].user]",
@@ -717,7 +710,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[variables('VMBuildParams').params[add(copyIndex(),2)].CustomScriptURis]",
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomFSScriptScriptFileName'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ',  variables('CustomFSScriptScriptFileName'))]"
         }
       },
       "copy": {
@@ -782,7 +775,7 @@
           "fileUris": "[variables('VMBuildParams').params[copyIndex()].CustomScriptURis]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomScriptScriptFolder'), '/', variables('CustomDCScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('CustomDCScriptScriptFileName'),' ',parameters('adminUsername'),' ',parameters('adminPassword'))]"
         }
       },
       "copy": {
@@ -844,7 +837,7 @@
         "azPowerShellVersion": "5.0",
         "timeout": "PT30M",
         "arguments": "[format(' -resourceGroup {0} -vnetName {1} -dc1 {2} -dc2 {3}', resourceGroup().name, parameters('virtualNetworkName'),variables('VMBuildParams').params[0].virtualMachineName,variables('VMBuildParams').params[1].virtualMachineName)]", // can pass an arguement string, double quotes must be escaped
-        "primaryScriptUri":"[concat(parameters('_artifactsLocation'),'/', variables('CustomScriptScriptFolder'), '/set-customdns.ps1', parameters('_artifactsLocationSasToken'))]",
+        "primaryScriptUri":"[concat(variables('sourceURI'),'/', variables('CustomScriptScriptFolder'), '/set-customdns.ps1')]",
         "cleanupPreference": "Always",
         "retentionInterval": "P1D"
       }
